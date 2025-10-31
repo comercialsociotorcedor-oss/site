@@ -2,1483 +2,1839 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checklist de Campo - Relatório Fotográfico</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Relatório Fotográfico RSS - Campo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #64748b;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --bg-main: #ffffff;
+            --bg-secondary: #f1f5f9;
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-secondary);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        
+        /* LANDING PAGE */
+        .landing {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+            text-align: center;
+            background: var(--bg-main);
+        }
+
+        .landing-logo {
+            font-size: 64px;
+            margin-bottom: 24px;
+        }
+
+        .landing h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .landing p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 420px;
             line-height: 1.6;
         }
-        
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            overflow: hidden;
+
+        .landing-info {
+            background: var(--bg-secondary);
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 40px;
+            border: 1px solid var(--border);
+            max-width: 420px;
+            width: 100%;
         }
-        
-        .header {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-        
-        .header p {
+
+        .landing-info h3 {
             font-size: 16px;
-            opacity: 0.9;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
         }
-        
-        .info-box {
-            background: #ecf0f1;
-            padding: 20px;
-            margin: 20px;
-            border-radius: 10px;
-            border-left: 5px solid #3498db;
-        }
-        
-        .info-box h3 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        
-        .info-box p {
-            color: #34495e;
+
+        .landing-features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
             font-size: 14px;
         }
-        
-        .progress-bar {
-            background: #ecf0f1;
-            height: 30px;
-            border-radius: 15px;
-            margin: 20px;
-            overflow: hidden;
-            position: relative;
+
+        .feature-item {
+            background: var(--bg-main);
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-start {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 16px 48px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-start:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-start:active {
+            transform: scale(0.98);
         }
         
-        .progress-fill {
-            background: linear-gradient(90deg, #27ae60, #2ecc71);
+        /* MAIN APP */
+        .app {
+            display: none;
+            padding: 20px 10px;
+        }
+        
+        .app.active {
+            display: block;
+        }
+        
+        /* HEADER */
+        .header {
+            background: var(--bg-main);
+            border-radius: 12px;
+            padding: 24px 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            letter-spacing: -0.3px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        /* PROGRESS CARD */
+        .progress-card {
+            background: var(--bg-main);
+            border-radius: 12px;
+            padding: 24px 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 20px 16px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .progress-bar-container {
+            background: var(--bg-secondary);
+            height: 40px;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--border);
+        }
+
+        .progress-bar-fill {
+            background: var(--primary);
             height: 100%;
             width: 0%;
-            transition: width 0.3s ease;
+            transition: width 0.5s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: bold;
+            font-weight: 500;
+            font-size: 14px;
         }
         
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            padding: 20px;
-            background: #f8f9fa;
-            border-top: 1px solid #dee2e6;
-            border-bottom: 1px solid #dee2e6;
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-number {
-            font-size: 32px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        
-        .stat-label {
-            font-size: 12px;
-            color: #7f8c8d;
-            text-transform: uppercase;
-        }
-        
+        /* SECTIONS */
         .section {
-            margin: 20px;
-            border-radius: 10px;
+            background: var(--bg-main);
+            border-radius: 12px;
+            margin-bottom: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
         }
-        
+
         .section-header {
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-            color: white;
-            padding: 15px 20px;
+            padding: 20px;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            font-weight: 500;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: background 0.3s;
+            transition: background 0.2s;
+            border-bottom: 1px solid var(--border);
         }
-        
+
         .section-header:hover {
-            background: linear-gradient(135deg, #2980b9 0%, #2574a9 100%);
+            background: var(--bg-secondary);
         }
-        
+
+        .section-header:active {
+            transform: scale(0.99);
+        }
+
         .section-header.critical {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            border-left: 3px solid var(--danger);
         }
-        
+
         .section-header.important {
-            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            border-left: 3px solid var(--warning);
         }
         
-        .section-header h2 {
-            font-size: 18px;
+        .section-title {
             display: flex;
             align-items: center;
+            gap: 12px;
+            font-size: 15px;
         }
-        
+
         .badge {
-            background: rgba(255,255,255,0.3);
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            margin-left: 10px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid var(--border);
         }
         
-        .toggle-icon {
-            font-size: 24px;
-            transition: transform 0.3s;
+        .arrow {
+            font-size: 18px;
+            transition: transform 0.2s;
+            color: var(--text-secondary);
         }
-        
-        .toggle-icon.rotated {
+
+        .arrow.open {
             transform: rotate(180deg);
         }
-        
+
         .section-content {
-            display: none;
-            padding: 20px;
-            background: white;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .section-content.show {
+            max-height: 10000px;
+            transition: max-height 0.5s ease-in;
         }
         
-        .section-content.active {
-            display: block;
+        /* ITEMS */
+        .item {
+            padding: 0;
+            border-bottom: 1px solid var(--border);
         }
-        
-        .subsection {
-            margin-bottom: 25px;
-            border-left: 3px solid #3498db;
-            padding-left: 15px;
+
+        .item:last-child {
+            border-bottom: none;
         }
-        
-        .subsection h3 {
-            color: #2c3e50;
-            font-size: 16px;
-            margin-bottom: 10px;
+
+        .item.checked .item-header {
+            background: var(--bg-secondary);
         }
-        
-        .subsection-description {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            font-size: 14px;
-            color: #555;
-        }
-        
-        .photo-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
+
+        .item-header {
+            padding: 16px 20px;
             display: flex;
             align-items: flex-start;
-            transition: all 0.3s;
-            border: 2px solid transparent;
+            gap: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
         }
-        
-        .photo-item.checked {
-            background: #d4edda;
-            border-color: #28a745;
+
+        .item-header:hover {
+            background: var(--bg-secondary);
         }
-        
-        .photo-item input[type="checkbox"] {
+
+        .item-header:active {
+            background: var(--bg-secondary);
+        }
+
+        .checkbox-custom {
             width: 24px;
             height: 24px;
-            margin-right: 15px;
+            min-width: 24px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
             cursor: pointer;
-            flex-shrink: 0;
-        }
-        
-        .photo-details {
-            flex-grow: 1;
-        }
-        
-        .photo-title {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 5px;
             display: flex;
             align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            background: var(--bg-main);
         }
-        
-        .photo-number {
-            background: #3498db;
+
+        .checkbox-custom.checked {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .checkbox-custom.checked::after {
+            content: '✓';
             color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            margin-right: 10px;
-        }
-        
-        .photo-description {
-            font-size: 13px;
-            color: #555;
-            margin-bottom: 5px;
-        }
-        
-        .photo-tips {
-            font-size: 12px;
-            color: #7f8c8d;
-            font-style: italic;
-        }
-        
-        .critical-note {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            font-size: 13px;
-        }
-        
-        .alert-danger {
-            background: #f8d7da;
-            border-left: 4px solid #dc3545;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            font-size: 13px;
-            color: #721c24;
-        }
-        
-        .notes-area {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            font-family: inherit;
             font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .item-info {
+            flex: 1;
+        }
+
+        .item-title {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .item-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .star {
+            color: var(--warning);
+            font-size: 15px;
+        }
+
+        .expand-btn {
+            padding: 6px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .expand-btn:hover {
+            background: var(--border);
+        }
+        
+        /* ITEM DETAILS (EXPANDIDO) */
+        .item-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: var(--bg-secondary);
+        }
+
+        .item-details.show {
+            max-height: 2000px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        .item-details-content {
+            padding: 20px;
+        }
+
+        .detail-section {
+            margin-bottom: 24px;
+        }
+
+        .detail-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .detail-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            background: var(--bg-main);
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .alert-box {
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            border-left: 3px solid var(--warning);
+            color: #78350f;
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            border-left: 3px solid var(--danger);
+            color: #7f1d1d;
+        }
+        
+        /* PHOTO UPLOAD */
+        .photo-section {
+            margin-bottom: 24px;
+        }
+
+        .photo-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg-main);
+        }
+
+        .photo-upload-area:hover {
+            border-color: var(--primary);
+            background: var(--bg-main);
+        }
+
+        .photo-upload-area.dragover {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+        .upload-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .upload-text {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .photo-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .photo-preview {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-remove {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .photo-remove:hover {
+            background: #b91c1c;
+        }
+
+        .photo-count {
+            font-size: 12px;
+            color: var(--success);
+            font-weight: 500;
             margin-top: 10px;
-            min-height: 80px;
         }
         
-        .notes-area:focus {
+        /* NOTES */
+        .notes-textarea {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.2s;
+            background: var(--bg-main);
+            color: var(--text-primary);
+        }
+
+        .notes-textarea:focus {
             outline: none;
-            border-color: #3498db;
+            border-color: var(--primary);
         }
         
-        .button-group {
+        /* BOTTOM NAV */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-main);
+            padding: 12px;
+            display: flex;
+            gap: 8px;
+            border-top: 1px solid var(--border);
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 14px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .nav-btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .nav-btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .nav-btn-secondary {
+            background: var(--bg-main);
+            color: var(--text-primary);
+        }
+
+        .nav-btn-secondary:hover {
+            background: var(--bg-secondary);
+        }
+
+        .nav-btn:active {
+            transform: scale(0.98);
+        }
+        
+        /* FLOATING ACTION BUTTONS */
+        .fab-container {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 999;
+        }
+
+        .fab {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .fab:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+
+        .fab:active {
+            transform: scale(0.95);
+        }
+
+        .fab-secondary {
+            background: var(--bg-main);
+            color: var(--primary);
+            font-size: 20px;
+            width: 48px;
+            height: 48px;
+            border: 1px solid var(--border);
+        }
+
+        .fab-secondary:hover {
+            background: var(--bg-secondary);
+        }
+        
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-main);
+            border-radius: 12px;
+            padding: 28px;
+            max-width: 420px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .modal-body {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .modal-footer {
+            margin-top: 24px;
             display: flex;
             gap: 10px;
-            padding: 20px;
-            justify-content: center;
         }
-        
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 25px;
-            font-size: 16px;
+
+        .modal-btn {
+            flex: 1;
+            padding: 14px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s;
-            font-weight: bold;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
-        }
-        
-        .btn-success {
-            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-            color: white;
-        }
-        
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
-        }
-        
-        .btn-warning {
-            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-            color: white;
-        }
-        
-        .btn-warning:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
-        }
-        
-        .footer {
-            background: #2c3e50;
-            color: white;
-            padding: 20px;
-            text-align: center;
             font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .modal-btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .modal-btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .modal-btn-secondary {
+            background: var(--bg-main);
+            color: var(--text-primary);
+        }
+
+        .modal-btn-secondary:hover {
+            background: var(--bg-secondary);
         }
         
-        @media print {
-            body {
-                background: white;
-                padding: 0;
-            }
-            .container {
-                box-shadow: none;
-            }
-            .button-group {
-                display: none;
-            }
-            .section-content {
-                display: block !important;
-            }
+        /* ANIMATIONS */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            animation: fadeIn 0.2s ease-out;
+        }
+        
+        /* RESPONSIVE */
+        @media (max-width: 360px) {
+            .landing h1 { font-size: 24px; }
+            .landing-logo { font-size: 56px; }
+            .stats-grid { gap: 8px; }
+            .stat-number { font-size: 20px; }
+        }
+        
+        /* HIDE FILE INPUT */
+        input[type="file"] {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- LANDING PAGE -->
+    <div class="landing" id="landing">
+        <div class="landing-logo">📸</div>
+        <h1>Relatório Fotográfico RSS</h1>
+        <p>Sistema completo de checklist com captura de fotos para inspeção de clínicas e estabelecimentos de saúde</p>
+        
+        <div class="landing-info">
+            <h3>✨ Recursos Premium</h3>
+            <div class="landing-features">
+                <div class="feature-item">
+                    <span>📷</span>
+                    <span>Upload de fotos</span>
+                </div>
+                <div class="feature-item">
+                    <span>✓</span>
+                    <span>Checklist completo</span>
+                </div>
+                <div class="feature-item">
+                    <span>📊</span>
+                    <span>Progresso em tempo real</span>
+                </div>
+                <div class="feature-item">
+                    <span>💾</span>
+                    <span>Salva automaticamente</span>
+                </div>
+                <div class="feature-item">
+                    <span>📝</span>
+                    <span>Anotações por item</span>
+                </div>
+                <div class="feature-item">
+                    <span>🎯</span>
+                    <span>33 itens organizados</span>
+                </div>
+            </div>
+        </div>
+        
+        <button class="btn-start" onclick="startApp()">🚀 Iniciar Inspeção</button>
+        
+        <p style="margin-top: 30px; font-size: 12px; opacity: 0.8;">
+            Clínica Dr. Cláudio Eulálio<br>
+            Sala 1701 - Diamond Center - Teresina/PI
+        </p>
+    </div>
+
+    <!-- MAIN APP -->
+    <div class="app" id="app">
+        <!-- HEADER -->
         <div class="header">
-            <h1>📸 CHECKLIST DE CAMPO - RELATÓRIO FOTOGRÁFICO</h1>
-            <p>Clínica Dr. Cláudio Eulálio - Cirurgia Plástica</p>
-            <p style="font-size: 14px; margin-top: 10px;">Sala 1701 - Diamond Center - Teresina/PI</p>
+            <h1>📸 Relatório Fotográfico RSS</h1>
+            <p>Clínica Dr. Cláudio Eulálio - Sala 1701</p>
         </div>
         
-        <div class="info-box">
-            <h3>📋 Instruções de Uso:</h3>
-            <p><strong>1.</strong> Abra este arquivo no celular ou tablet durante a visita</p>
-            <p><strong>2.</strong> Marque cada item conforme for fotografando</p>
-            <p><strong>3.</strong> Use a área de notas para observações importantes</p>
-            <p><strong>4.</strong> Acompanhe seu progresso na barra superior</p>
-            <p><strong>5.</strong> ⭐ = Item CRÍTICO - não pode faltar!</p>
+        <!-- PROGRESS CARD -->
+        <div class="progress-card">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="statDone">0</div>
+                    <div class="stat-label">Concluídas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">33</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="statCritical">0/13</div>
+                    <div class="stat-label">Críticas</div>
+                </div>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progressBar">0%</div>
+            </div>
         </div>
+
+        <!-- SECTIONS -->
+        <div id="sectionsContainer"></div>
         
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressBar">0%</div>
-        </div>
-        
-        <div class="stats">
-            <div class="stat-item">
-                <div class="stat-number" id="totalPhotos">0</div>
-                <div class="stat-label">Fotos Tiradas</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number" id="totalItems">33</div>
-                <div class="stat-label">Total de Itens</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number" id="criticalDone">0/13</div>
-                <div class="stat-label">Itens Críticos</div>
-            </div>
-        </div>
+        <div style="height: 20px;"></div>
+    </div>
 
-        <!-- SEÇÃO 1: FACHADA E ACESSO -->
-        <div class="section">
-            <div class="section-header" onclick="toggleSection(this)">
-                <h2>🏢 1. FACHADA E ACESSO EXTERNO <span class="badge">3 fotos</span></h2>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="section-content">
-                <div class="subsection">
-                    <h3>1.1. Fachada do Edifício Diamond Center</h3>
-                    <div class="subsection-description">
-                        📍 <strong>Local:</strong> Av. Universitária, 750 - tire da calçada em frente<br>
-                        🎯 <strong>Objetivo:</strong> Localizar geograficamente o estabelecimento
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 01</span>
-                                Vista externa do prédio Diamond Center
-                            </div>
-                            <div class="photo-description">
-                                ✓ Fachada completa do edifício<br>
-                                ✓ Letreiro "Diamond Center" visível<br>
-                                ✓ Contexto urbano da localização
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Tire da calçada oposta (10-15 metros). Modo horizontal (paisagem)
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 02</span>
-                                Entrada da clínica - Sala 1701
-                            </div>
-                            <div class="photo-description">
-                                ✓ Porta com número "1701" bem visível<br>
-                                ✓ Acesso ao 17º andar
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: 2-3 metros de distância. Certifique-se que o número aparece claramente
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 03</span>
-                                Placa de identificação do médico
-                            </div>
-                            <div class="photo-description">
-                                ✓ Placa "Dr. Cláudio Eulálio - Cirurgia Plástica"<br>
-                                ✓ Identificação completa e legível
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Close (0,5-1 metro). Evite reflexos no vidro/acrílico
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <textarea class="notes-area" placeholder="📝 Notas e observações desta seção..."></textarea>
-                </div>
+    <!-- FLOATING ACTION BUTTONS -->
+    <div class="fab-container" id="fabContainer" style="display: none;">
+        <button class="fab fab-secondary" onclick="scrollToTop()" title="Voltar ao topo">↑</button>
+        <button class="fab" onclick="openExportModal()" title="Exportar relatório">📤</button>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav" id="bottomNav" style="display: none;">
+        <button class="nav-btn nav-btn-secondary" onclick="expandAll()">📂 Abrir Tudo</button>
+        <button class="nav-btn nav-btn-secondary" onclick="collapseAll()">📁 Fechar</button>
+        <button class="nav-btn nav-btn-primary" onclick="openSummary()">📊 Resumo</button>
+    </div>
+
+    <!-- MODAL RESUMO -->
+    <div class="modal" id="summaryModal">
+        <div class="modal-content">
+            <div class="modal-header">📊 Resumo da Inspeção</div>
+            <div class="modal-body" id="summaryContent"></div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeSummary()">Fechar</button>
+                <button class="modal-btn modal-btn-primary" onclick="generateReport()">📄 Gerar Relatório</button>
             </div>
         </div>
+    </div>
 
-        <!-- SEÇÃO 2: RECEPÇÃO -->
-        <div class="section">
-            <div class="section-header" onclick="toggleSection(this)">
-                <h2>🛋️ 2. RECEPÇÃO E SALA DE ESPERA <span class="badge">2 fotos</span></h2>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="section-content">
-                <div class="subsection">
-                    <h3>2.1. Área de Recepção</h3>
-                    <div class="subsection-description">
-                        📍 <strong>Local:</strong> Primeiro ambiente após entrada<br>
-                        🎯 <strong>Objetivo:</strong> Documentar área administrativa e organização
+    <!-- MODAL EXPORTAR -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">📤 Exportar Dados</div>
+            <div class="modal-body">
+                <p>Escolha como deseja exportar seu progresso:</p>
+                <div style="margin-top: 20px;">
+                    <button class="modal-btn modal-btn-primary" onclick="exportCompleteReport()" style="width: 100%; margin-bottom: 10px;">
+                        📦 Exportar Relatório Completo (ZIP)
+                    </button>
+                    <button class="modal-btn modal-btn-primary" onclick="downloadJSON()" style="width: 100%; margin-bottom: 10px;">
+                        💾 Baixar JSON (Backup)
+                    </button>
+                    <button class="modal-btn modal-btn-primary" onclick="shareProgress()" style="width: 100%;">
+                        📱 Compartilhar Progresso
+                    </button>
+                </div>
+                <div id="exportProgress" style="margin-top: 20px; display: none;">
+                    <div style="background: var(--bg-secondary); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 14px; color: var(--text-primary); margin-bottom: 8px;">Gerando relatório...</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);" id="exportStatus">Preparando arquivos</div>
                     </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 04</span>
-                                Balcão de recepção (visão geral)
-                            </div>
-                            <div class="photo-description">
-                                ✓ Balcão completo<br>
-                                ✓ Computador e área de trabalho<br>
-                                ✓ Organização geral
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Posicione-se de frente para o balcão. Foto ampla pegando todo o ambiente
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 05</span>
-                                Sala de espera
-                            </div>
-                            <div class="photo-description">
-                                ✓ Poltronas/cadeiras para pacientes<br>
-                                ✓ TV ou elementos de conforto (se houver)<br>
-                                ✓ Ambiente organizado e limpo
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: NÃO fotografe pacientes! Se houver alguém esperando, agende horário com menos movimento
-                            </div>
-                            <div class="alert-danger">
-                                ⚠️ <strong>ATENÇÃO:</strong> Não fotografar pacientes ou pessoas identificáveis (privacidade/LGPD)
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <textarea class="notes-area" placeholder="📝 Notas e observações desta seção..."></textarea>
                 </div>
             </div>
-        </div>
-
-        <!-- SEÇÃO 3: CONSULTÓRIO -->
-        <div class="section">
-            <div class="section-header" onclick="toggleSection(this)">
-                <h2>🩺 3. CONSULTÓRIO MÉDICO <span class="badge">1 foto</span></h2>
-                <span class="toggle-icon">▼</span>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeExportModal()">Fechar</button>
             </div>
-            <div class="section-content">
-                <div class="subsection">
-                    <h3>3.1. Sala de Consulta</h3>
-                    <div class="subsection-description">
-                        📍 <strong>Local:</strong> Ambiente para consultas e avaliações<br>
-                        🎯 <strong>Objetivo:</strong> Documentar área de atendimento clínico
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 06</span>
-                                Consultório (visão geral)
-                            </div>
-                            <div class="photo-description">
-                                ✓ Mesa do médico e cadeiras<br>
-                                ✓ Maca de exame (se houver)<br>
-                                ✓ Organização geral do ambiente
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Tire de um canto da sala (pega mais área). Evite documentos com dados de pacientes visíveis
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <textarea class="notes-area" placeholder="📝 Notas e observações desta seção..."></textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- SEÇÃO 4: SALA DE PROCEDIMENTOS -->
-        <div class="section">
-            <div class="section-header important" onclick="toggleSection(this)">
-                <h2>⚕️ 4. SALA DE PROCEDIMENTOS <span class="badge">4 fotos</span></h2>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="section-content">
-                <div class="critical-note">
-                    <strong>⭐ ÁREA IMPORTANTE!</strong> Esta sala é onde acontecem os procedimentos cirúrgicos ambulatoriais. Fotografe com atenção aos detalhes técnicos.
-                </div>
-                
-                <div class="subsection">
-                    <h3>4.1. Infraestrutura da Sala</h3>
-                    <div class="subsection-description">
-                        📍 <strong>Procedimentos realizados:</strong> Botox, preenchimentos, lipoaspiração ambulatorial, pequenas suturas, retirada de pontos<br>
-                        🎯 <strong>Objetivo:</strong> Documentar capacidade técnica e infraestrutura
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 07</span>
-                                Sala de procedimentos (visão geral)
-                            </div>
-                            <div class="photo-description">
-                                ✓ Vista ampla mostrando TODA a sala<br>
-                                ✓ Maca elétrica posicionada<br>
-                                ✓ Foco cirúrgico<br>
-                                ✓ Armários e bancada<br>
-                                ✓ <strong>Coletores de resíduos visíveis</strong>
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Tire de uma quina da sala (diagonal). Acenda todas as luzes. Inclua os coletores de lixo no enquadramento!
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 08</span>
-                                Maca elétrica e foco cirúrgico
-                            </div>
-                            <div class="photo-description">
-                                ✓ Maca ajustável completa<br>
-                                ✓ Foco de luz posicionado<br>
-                                ✓ Estado de conservação dos equipamentos
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Mostre que equipamentos estão em bom estado e funcionais
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 09</span>
-                                Armários de materiais
-                            </div>
-                            <div class="photo-description">
-                                ✓ Armários para materiais estéreis<br>
-                                ✓ Organização externa (limpeza)<br>
-                                ✓ Fechados ou abertos (se autorizarem)
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Pergunte se pode fotografar interior. Se não, fotografe apenas fechado mostrando organização
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 10</span>
-                                Bancada com pia
-                            </div>
-                            <div class="photo-description">
-                                ✓ Pia para higienização de mãos<br>
-                                ✓ Torneira (verificar se tem acionamento por pedal - é um plus!)<br>
-                                ✓ Sabão líquido/antisséptico<br>
-                                ✓ Papel toalha<br>
-                                ✓ Bancada limpa
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Se torneira for com pedal, tire foto close! É um diferencial positivo
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <textarea class="notes-area" placeholder="📝 Notas: estado dos equipamentos, organização, limpeza..."></textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- SEÇÃO 5: COLETORES DE RESÍDUOS (CRÍTICA!) -->
-        <div class="section">
-            <div class="section-header critical" onclick="toggleSection(this)">
-                <h2>♻️ 5. SISTEMA DE RESÍDUOS - SALA DE PROCEDIMENTOS ⭐⭐⭐ <span class="badge">5 fotos</span></h2>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="section-content">
-                <div class="alert-danger">
-                    <strong>🚨 SEÇÃO CRÍTICA - PRIORIDADE MÁXIMA!</strong><br>
-                    Esta é a parte MAIS IMPORTANTE do relatório fotográfico. Fotografe com máxima atenção aos detalhes. Tire múltiplas fotos de cada coletor (depois escolhe a melhor).
-                </div>
-                
-                <div class="subsection">
-                    <h3>5.1. Coletor de RESÍDUO INFECTANTE (Grupo A) ☣️</h3>
-                    <div class="subsection-description">
-                        <strong>O que vai neste coletor:</strong> Gazes com sangue, luvas usadas em procedimentos, compressas sujas, tecido adiposo de lipoaspiração<br>
-                        <strong>Base legal:</strong> RDC 222/2018, Art. 13-15
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this, true)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 11</span>
-                                ⭐ Coletor Grupo A - Vista Geral
-                            </div>
-                            <div class="photo-description">
-                                <strong>VERIFICAR e FOTOGRAFAR:</strong><br>
-                                ✓ Saco cor BRANCA LEITOSA (ou vermelha)<br>
-                                ✓ Símbolo de risco biológico ☣️ VISÍVEL<br>
-                                ✓ Lixeira com tampa (de preferência com pedal)<br>
-                                ✓ Nível de preenchimento (máximo 2/3 da capacidade)<br>
-                                ✓ Lixeira completa (base até tampa)
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Distância 1-2 metros. Foto deve mostrar lixeira inteira. Acenda luz se necessário
-                            </div>
-                            <div class="critical-note">
-                                <strong>⚠️ ANÁLISE CRÍTICA:</strong><br>
-                                • Símbolo é IMPRESSO no saco? (correto) ou é adesivo? (incorreto)<br>
-                                • Saco está muito cheio? (acima de 2/3 = não conforme)<br>
-                                • Tem pedal de acionamento? (positivo para relatório)
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this, true)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 12</span>
-                                ⭐ Grupo A - Close no Símbolo
-                            </div>
-                            <div class="photo-description">
-                                <strong>FOTO CLOSE (30-50 cm):</strong><br>
-                                ✓ Símbolo de risco biológico ☣️ bem nítido<br>
-                                ✓ Verificar se é IMPRESSO (correto) ou adesivo (incorreto)<br>
-                                ✓ Inscrição "INFECTANTE" ou "RESÍDUO INFECTANTE" (se tiver)
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Chegue bem perto! Foto deve ficar legível. Este detalhe é FUNDAMENTAL para análise
-                            </div>
-                            <div class="alert-danger">
-                                <strong>ATENÇÃO:</strong> Se o símbolo for ADESIVO (colado depois), isso é NÃO CONFORMIDADE! Anote para mencionar no relatório.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="subsection">
-                    <h3>5.2. Coletor de RESÍDUO COMUM (Grupo D) 🗑️</h3>
-                    <div class="subsection-description">
-                        <strong>O que vai neste coletor:</strong> Papel de embalagens limpas, plásticos sem contato com paciente, papel toalha do banheiro<br>
-                        <strong>Regra de ouro:</strong> SEM contato com sangue ou fluidos = Grupo D
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this, true)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 13</span>
-                                ⭐ Coletor Grupo D - Resíduo Comum
-                            </div>
-                            <div class="photo-description">
-                                <strong>VERIFICAR e FOTOGRAFAR:</strong><br>
-                                ✓ Saco cor PRETA, CINZA ou colorido (coleta seletiva)<br>
-                                ✓ SEM símbolo de risco biológico<br>
-                                ✓ Lixeira SEPARADA do infectante (não pode estar junto!)<br>
-                                ✓ Verificar que NÃO há mistura de resíduos
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Mostre que as duas lixeiras estão claramente separadas (uma do lado da outra, mas distintas)
-                            </div>
-                            <div class="alert-danger">
-                                <strong>NÃO CONFORMIDADE GRAVE:</strong> Se houver resíduos infectantes (gazes sujas, luvas) no lixo comum = MISTURA PROIBIDA! Fotografe e anote!
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="subsection">
-                    <h3>5.3. Coletor de PERFUROCORTANTES (Grupo E) 💉⭐⭐⭐</h3>
-                    <div class="subsection-description">
-                        <strong>O que vai neste coletor:</strong> Agulhas (hipodérmicas, sutura), lâminas de bisturi, scalps, ampolas de vidro quebradas<br>
-                        <strong>Base legal:</strong> RDC 222/2018, Art. 86-89
-                    </div>
-                    
-                    <div class="alert-danger">
-                        <strong>🚨 ITEM SUPER CRÍTICO!</strong> O coletor de perfurocortantes é um dos pontos mais fiscalizados. Fotografe com máxima atenção!<br>
-                        <strong>⚠️ NUNCA fotografe o coletor ABERTO! Risco de acidente!</strong>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this, true)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 14</span>
-                                ⭐⭐⭐ Perfurocortante - Vista Geral FECHADO
-                            </div>
-                            <div class="photo-description">
-                                <strong>CARACTERÍSTICAS OBRIGATÓRIAS:</strong><br>
-                                ✓ COR AMARELA (obrigatório pela norma!)<br>
-                                ✓ Material RÍGIDO (papelão rígido ou plástico)<br>
-                                ✓ TAMPA BEM FECHADA (verificar vedação!)<br>
-                                ✓ Sem perfurações ou avarias<br>
-                                ✓ Nível de preenchimento até 2/3 da capacidade<br>
-                                ✓ Localizado próximo ao ponto de uso
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Distância 0,5-1 metro. Mostre coletor completo. Verifique visualmente se a tampa está bem vedada!
-                            </div>
-                            <div class="critical-note">
-                                <strong>PONTOS CRÍTICOS DE ANÁLISE:</strong><br>
-                                • Tampa está realmente fechada? (se aberta = NÃO CONFORME GRAVE!)<br>
-                                • Coletor muito cheio? (acima de 2/3 = trocar imediatamente)<br>
-                                • Cor amarela bem visível? (obrigatório)<br>
-                                • Há sinais de vazamento ou perfuração? (grave se houver)
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this, true)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 15</span>
-                                ⭐⭐⭐ Perfurocortante - Close na Identificação
-                            </div>
-                            <div class="photo-description">
-                                <strong>ETIQUETA DEVE CONTER:</strong><br>
-                                ✓ Símbolo de risco biológico ☣️<br>
-                                ✓ Inscrição "PERFUROCORTANTE"<br>
-                                ✓ Identificação do local: "SALA 1701"<br>
-                                ✓ Capacidade do coletor (ex: 7 litros)<br>
-                                ✓ Linha de preenchimento máximo (2/3)<br>
-                                ✓ Data de início do uso (se tiver)<br>
-                                ✓ Inscrição "NÃO ESVAZIAR" ou "NÃO REAPROVEITAR"
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: FOTO BEM DE PERTO (20-30 cm). Deve ficar 100% legível! Esta foto é essencial para análise de conformidade.
-                            </div>
-                            <div class="alert-danger">
-                                <strong>SE FALTAR ALGUMA INFORMAÇÃO NA ETIQUETA:</strong> É não conformidade! Anote tudo que está faltando para mencionar no relatório.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <textarea class="notes-area" placeholder="📝 NOTAS CRÍTICAS: Símbolos impressos ou adesivos? Níveis de preenchimento? Segregação correta? Tampa do perfurocortante bem vedada? Observações importantes..."></textarea>
-            </div>
-        </div>
-
-        <!-- SEÇÃO 6: EXPURGO -->
-        <div class="section">
-            <div class="section-header important" onclick="toggleSection(this)">
-                <h2>🧼 6. EXPURGO (SALA DE UTILIDADES) <span class="badge">3 fotos</span></h2>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="section-content">
-                <div class="critical-note">
-                    <strong>⭐ IMPORTANTE!</strong> Expurgo é área crítica para higienização. Deve estar limpo e organizado.
-                </div>
-                
-                <div class="subsection">
-                    <h3>6.1. Ambiente de Limpeza</h3>
-                    <div class="subsection-description">
-                        📍 <strong>Função:</strong> Limpeza de instrumentais, higienização de materiais, preparo de soluções<br>
-                        🎯 <strong>Objetivo:</strong> Comprovar ambiente exclusivo para área "suja"
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 16</span>
-                                Porta do expurgo
-                            </div>
-                            <div class="photo-description">
-                                ✓ Porta com identificação "EXPURGO" ou "SALA DE UTILIDADES"<br>
-                                ✓ Placa visível
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Foto da porta externa. Identificação deve estar legível
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 17</span>
-                                Expurgo (visão geral interna)
-                            </div>
-                            <div class="photo-description">
-                                ✓ Interior mostrando pia<br>
-                                ✓ Prateleiras para produtos<br>
-                                ✓ Produtos de limpeza organizados<br>
-                                ✓ Ambiente limpo e organizado
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Vista ampla do interior. Ambiente deve estar arrumado na hora da foto
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this, true)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 18</span>
-                                ⭐ Pia do expurgo (detalhe)
-                            </div>
-                            <div class="photo-description">
-                                ✓ Close na pia e torneira<br>
-                                ✓ <strong>OBSERVAR: Tipo de torneira:</strong><br>
-                                  → Com acionamento por pedal (ÓTIMO - mencione no relatório!)<br>
-                                  → Alavanca única (BOM)<br>
-                                  → Manual comum (ACEITÁVEL)<br>
-                                ✓ Presença de sabão<br>
-                                ✓ Estado de conservação
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Se torneira for com pedal, destaque isso no relatório! É um ponto muito positivo.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <textarea class="notes-area" placeholder="📝 Notas: tipo de torneira, organização, produtos vencidos (se houver), limpeza..."></textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- SEÇÃO 7: BANHEIROS -->
-        <div class="section">
-            <div class="section-header" onclick="toggleSection(this)">
-                <h2>🚽 7. BANHEIROS <span class="badge">1-2 fotos</span></h2>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="section-content">
-                <div class="subsection">
-                    <h3>7.1. Instalações Sanitárias</h3>
-                    <div class="subsection-description">
-                        📍 <strong>Segundo PGRSS:</strong> Clínica tem 2 banheiros<br>
-                        🎯 <strong>Objetivo:</strong> Documentar instalações sanitárias adequadas
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 19</span>
-                                Banheiro (visão geral)
-                            </div>
-                            <div class="photo-description">
-                                ✓ Vaso sanitário<br>
-                                ✓ Pia<br>
-                                ✓ Revestimento cerâmico<br>
-                                ✓ Limpeza e conservação
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Fotografe com banheiro limpo! Se tiver 2 banheiros diferentes, tire 1 foto de cada.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <textarea class="notes-area" placeholder="📝 Notas: condições de limpeza, funcionamento, ventilação..."></textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- SEÇÃO 8: ARMAZENAMENTO TEMPORÁRIO -->
-        <div class="section">
-            <div class="section-header critical" onclick="toggleSection(this)">
-                <h2>📦 8. ARMAZENAMENTO TEMPORÁRIO - 17º ANDAR ⭐⭐ <span class="badge">3 fotos</span></h2>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="section-content">
-                <div class="alert-danger">
-                    <strong>🚨 ÁREA MUITO IMPORTANTE!</strong><br>
-                    Segundo o PGRSS, os resíduos RSS (Grupo A/E) ficam armazenados no 17º andar até coleta MENSAL pela NATUS Ambiental.<br>
-                    <strong>A BOMBONA AZUL DEVE ESTAR HERMETICAMENTE FECHADA!</strong>
-                </div>
-                
-                <div class="subsection">
-                    <h3>8.1. Local de Armazenamento no Pavimento</h3>
-                    <div class="subsection-description">
-                        📍 <strong>Local:</strong> Área próxima à sala 1701 (mesmo andar)<br>
-                        🎯 <strong>Objetivo:</strong> Documentar armazenamento provisório até coleta mensal
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 20</span>
-                                Porta/área do armazenamento temporário
-                            </div>
-                            <div class="photo-description">
-                                ✓ Entrada do local<br>
-                                ✓ Identificação (se houver)<br>
-                                ✓ Localização no 17º andar
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Pode ser uma sala, um quartinho ou área específica no corredor do andar
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this, true)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 21</span>
-                                ⭐⭐⭐ BOMBONA AZUL 50L - HERMETICAMENTE FECHADA
-                            </div>
-                            <div class="photo-description">
-                                <strong>ESTA É UMA DAS FOTOS MAIS CRÍTICAS!</strong><br><br>
-                                <strong>VERIFICAR E FOTOGRAFAR:</strong><br>
-                                ✓ Cor AZUL bem visível (50 litros)<br>
-                                ✓ <strong>TAMPA HERMETICAMENTE FECHADA</strong> (CRÍTICO!)<br>
-                                ✓ Etiqueta: "LIXO INFECTANTE - SALA 1701"<br>
-                                ✓ Símbolo de risco biológico ☣️<br>
-                                ✓ Estado de conservação da bombona<br>
-                                ✓ Sem vazamentos ou avarias
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Distância 0,5-1 metro. Foto deve mostrar CLARAMENTE que a tampa está bem vedada!
-                            </div>
-                            <div class="alert-danger">
-                                <strong>⚠️ NÃO CONFORMIDADE GRAVÍSSIMA:</strong><br>
-                                Se a bombona estiver ABERTA ou MAL VEDADA = RISCO DE CONTAMINAÇÃO!<br>
-                                Se encontrar assim, fotografe (é prova) e RECOMENDE FECHAMENTO IMEDIATO no relatório!<br><br>
-                                <strong>Pergunte ao responsável:</strong> "A bombona está bem fechada? Posso verificar a vedação?"
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 22</span>
-                                Lixeira de resíduo comum (se houver no local)
-                            </div>
-                            <div class="photo-description">
-                                ✓ Lixeira com saco preto (Grupo D)<br>
-                                ✓ Separada do infectante<br>
-                                ✓ Sem mistura
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Mostrar que há segregação também no armazenamento temporário
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <textarea class="notes-area" placeholder="📝 NOTAS CRÍTICAS: Bombona bem fechada? Estado de vedação? Etiqueta legível? Organização do local? Observações..."></textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- SEÇÃO 9: ARMAZENAMENTO EXTERNO -->
-        <div class="section">
-            <div class="section-header critical" onclick="toggleSection(this)">
-                <h2>🏢 9. ARMAZENAMENTO EXTERNO - TÉRREO ⭐⭐⭐ <span class="badge">7 fotos</span></h2>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="section-content">
-                <div class="alert-danger">
-                    <strong>🚨 SEÇÃO CRÍTICA - SUPER IMPORTANTE!</strong><br>
-                    O abrigo externo é uma das áreas mais fiscalizadas. Tire muitas fotos e observe TODOS os detalhes!<br><br>
-                    <strong>Segundo PGRSS:</strong><br>
-                    • Abrigo no térreo do Diamond Center<br>
-                    • 2 áreas separadas: RSS e Resíduo Comum<br>
-                    • Acesso externo pela Rua Miosótis
-                </div>
-                
-                <div class="subsection">
-                    <h3>9.1. Acesso Externo</h3>
-                    <div class="subsection-description">
-                        📍 <strong>Local:</strong> Rua Miosótis (lateral do edifício)<br>
-                        🎯 <strong>Objetivo:</strong> Documentar acesso para coleta externa
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 23</span>
-                                Portão de acesso - Rua Miosótis
-                            </div>
-                            <div class="photo-description">
-                                ✓ Vista externa da Rua Miosótis<br>
-                                ✓ Portão onde caminhão coletor para<br>
-                                ✓ Acesso facilitado para veículos
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Tire da calçada mostrando portão e acesso
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="subsection">
-                    <h3>9.2. Entrada Interna do Abrigo</h3>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this, true)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 24</span>
-                                ⭐ Porta interna do abrigo
-                            </div>
-                            <div class="photo-description">
-                                ✓ Porta vista de dentro do edifício (térreo)<br>
-                                ✓ Identificação: "LIXO" ou "RESÍDUOS" ou "ABRIGO DE RESÍDUOS"<br>
-                                ✓ Símbolo de risco biológico (se houver)
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Foto da entrada mostrando identificação clara
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="subsection">
-                    <h3>9.3. Interior do Abrigo - ÁREA CRÍTICA!</h3>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this, true)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 25</span>
-                                ⭐⭐⭐ Visão geral do abrigo (interno)
-                            </div>
-                            <div class="photo-description">
-                                <strong>FOTO AMPLA mostrando:</strong><br>
-                                ✓ <strong>SEPARAÇÃO entre RSS e resíduo comum</strong> (CRÍTICO!)<br>
-                                ✓ Piso impermeável (cerâmica/cimento queimado)<br>
-                                ✓ Paredes revestidas<br>
-                                ✓ Organização geral<br>
-                                ✓ Limpeza do ambiente<br>
-                                ✓ Recipientes fechados (bombonas/sacos)
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Tire de cima para baixo (pega mais área). Acenda TODAS as luzes! Foto não pode ficar escura!
-                            </div>
-                            <div class="critical-note">
-                                <strong>PONTOS CRÍTICOS DE ANÁLISE:</strong><br>
-                                • Há separação CLARA entre RSS e comum? (obrigatório!)<br>
-                                • Piso é lavável? Está limpo?<br>
-                                • Há presença de vetores (mosquitos, baratas, ratos)? (se houver = grave!)<br>
-                                • Recipientes estão fechados? (obrigatório!)
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this, true)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 26</span>
-                                ⭐ Detalhes do piso e drenagem
-                            </div>
-                            <div class="photo-description">
-                                ✓ Piso impermeável (cerâmica/cimento queimado)<br>
-                                ✓ Ralo sifonado (se visível)<br>
-                                ✓ Canaletas de escoamento<br>
-                                ✓ Declividade (se possível observar)
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Foto do chão mostrando tipo de piso e sistema de drenagem
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this, true)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 27</span>
-                                ⭐⭐ Ventilação e tela de proteção
-                            </div>
-                            <div class="photo-description">
-                                <strong>MUITO IMPORTANTE:</strong><br>
-                                ✓ Abertura para ventilação natural<br>
-                                ✓ <strong>TELA de proteção contra insetos e roedores</strong> (OBRIGATÓRIO!)<br>
-                                ✓ Verificar se tela está ÍNTEGRA (sem rasgos ou furos)
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Close na abertura mostrando tela claramente. Verifique visualmente se há rasgos!
-                            </div>
-                            <div class="alert-danger">
-                                <strong>NÃO CONFORMIDADE GRAVE:</strong><br>
-                                • FALTA de tela = entrada de vetores = risco sanitário!<br>
-                                • Tela rasgada/furada = mesma gravidade!<br>
-                                Se encontrar, fotografe (prova) e RECOMENDE CORREÇÃO URGENTE!
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this, true)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 28</span>
-                                ⭐ Porta específica para RSS
-                            </div>
-                            <div class="photo-description">
-                                ✓ Porta/área com símbolo de risco biológico ☣️<br>
-                                ✓ Identificação "GRUPO A", "RSS" ou "INFECTANTE"<br>
-                                ✓ Separação visual da área de resíduo comum
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Mostrar que há segregação no abrigo externo também
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 29</span>
-                                Ponto de água para higienização
-                            </div>
-                            <div class="photo-description">
-                                ✓ Torneira/mangueira para limpeza<br>
-                                ✓ Área para lavagem dos coletores<br>
-                                ✓ Ponto de água funcional
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Mostrar que é possível higienizar os recipientes no local
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <textarea class="notes-area" placeholder="📝 NOTAS CRÍTICAS DO ABRIGO: Separação RSS/comum clara? Tela íntegra? Presença de vetores? Limpeza? Piso impermeável? Recipientes fechados? Observações importantes..."></textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- SEÇÃO 10: DOCUMENTAÇÃO -->
-        <div class="section">
-            <div class="section-header important" onclick="toggleSection(this)">
-                <h2>📄 10. DOCUMENTAÇÃO TÉCNICA <span class="badge">4 fotos</span></h2>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="section-content">
-                <div class="critical-note">
-                    <strong>⚠️ IMPORTANTE:</strong> Fotografe documentos completos e LEGÍVEIS. Verifique validades!
-                </div>
-                
-                <div class="subsection">
-                    <h3>10.1. Certificados Obrigatórios</h3>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this, true)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 30</span>
-                                ⭐ Certificado de Higienização do Reservatório
-                            </div>
-                            <div class="photo-description">
-                                <strong>VERIFICAR NO CERTIFICADO:</strong><br>
-                                ✓ Empresa: SANITIZAR<br>
-                                ✓ Data da higienização: Abril/2025<br>
-                                ✓ <strong>Validade: 01/10/2025</strong><br>
-                                ✓ Nome do estabelecimento correto<br>
-                                ✓ Certificado completo e legível
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Tire de cima para baixo, sem sombras. Todas as informações devem ficar legíveis
-                            </div>
-                            <div class="critical-note">
-                                <strong>ANÁLISE:</strong> Certificado válido até 01/10/2025. Se a visita for após esta data = VENCIDO = não conforme!
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this, true)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 31</span>
-                                ⭐ Certificado de Controle de Pragas (Dedetização)
-                            </div>
-                            <div class="photo-description">
-                                <strong>VERIFICAR NO CERTIFICADO:</strong><br>
-                                ✓ Empresa: T C de S Costa Dedetizadora<br>
-                                ✓ Data da dedetização: Abril/2025<br>
-                                ✓ <strong>Validade: 08/10/2025</strong><br>
-                                ✓ Certificado completo e legível
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Mesmo procedimento. Foto legível de todo o certificado
-                            </div>
-                            <div class="critical-note">
-                                <strong>ANÁLISE:</strong> Certificado válido até 08/10/2025. Verificar se está dentro da validade na data da visita!
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="subsection">
-                    <h3>10.2. Contratos de Coleta</h3>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 32</span>
-                                Contrato NATUS Ambiental (RSS)
-                            </div>
-                            <div class="photo-description">
-                                <strong>FOTOGRAFAR:</strong><br>
-                                ✓ Primeira página/capa do contrato<br>
-                                ✓ Nome: NATUS Ambiental LTDA<br>
-                                ✓ Tipo de serviço: Coleta de RSS (Grupos A e E)<br>
-                                ✓ Periodicidade: MENSAL
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Não precisa fotografar contrato inteiro, só primeira página identificando a empresa e serviço
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="photo-item">
-                        <input type="checkbox" onchange="updateProgress(this)">
-                        <div class="photo-details">
-                            <div class="photo-title">
-                                <span class="photo-number">FOTO 33</span>
-                                Licença Ambiental da NATUS (se disponível)
-                            </div>
-                            <div class="photo-description">
-                                ✓ Cópia da licença ambiental da empresa coletora<br>
-                                ✓ Verificar validade<br>
-                                ✓ CNPJ da empresa
-                            </div>
-                            <div class="photo-tips">
-                                💡 Dica: Pergunte se têm cópia da licença da NATUS. Se não tiverem, anote no relatório "não disponibilizado"
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <textarea class="notes-area" placeholder="📝 Notas: Certificados dentro da validade? Falta algum documento? Observações..."></textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- BOTÕES DE AÇÃO -->
-        <div class="button-group">
-            <button class="btn btn-primary" onclick="expandAll()">📂 Expandir Todas Seções</button>
-            <button class="btn btn-warning" onclick="collapseAll()">📁 Fechar Todas Seções</button>
-            <button class="btn btn-success" onclick="window.print()">🖨️ Imprimir Checklist</button>
-        </div>
-
-        <!-- FOOTER -->
-        <div class="footer">
-            <p><strong>Checklist Interativo - Relatório Fotográfico RSS</strong></p>
-            <p>RDC ANVISA 222/2018 | CONAMA 358/2005 | IN SEMAM Teresina 001/2024</p>
-            <p style="margin-top: 10px; font-size: 12px;">
-                💾 Dica: Salve esta página (Ctrl+S) e abra no celular durante a visita!<br>
-                As marcações são salvas automaticamente no navegador.
-            </p>
         </div>
     </div>
 
     <script>
-        // Carregar estado salvo
-        window.addEventListener('load', function() {
+        // DATA STRUCTURE
+        const sections = [
+            {
+                id: 1,
+                title: "🏢 FACHADA E ACESSO",
+                count: 3,
+                type: "normal",
+                items: [
+                    {
+                        id: 1,
+                        title: "FOTO 01 - Fachada do Edifício Diamond Center",
+                        desc: "Vista externa completa, letreiro visível, contexto urbano",
+                        tips: "💡 Tire da calçada oposta (10-15m). Modo horizontal.",
+                        critical: false
+                    },
+                    {
+                        id: 2,
+                        title: "FOTO 02 - Entrada da Sala 1701",
+                        desc: "Porta com número bem visível, acesso ao 17º andar",
+                        tips: "💡 2-3 metros de distância. Número deve aparecer claramente.",
+                        critical: false
+                    },
+                    {
+                        id: 3,
+                        title: "FOTO 03 - Placa de Identificação do Médico",
+                        desc: "Placa 'Dr. Cláudio Eulálio - Cirurgia Plástica', legível",
+                        tips: "💡 Close (0,5-1m). Evite reflexos no vidro/acrílico.",
+                        critical: false
+                    }
+                ]
+            },
+            {
+                id: 2,
+                title: "🛋️ RECEPÇÃO E ESPERA",
+                count: 2,
+                type: "normal",
+                items: [
+                    {
+                        id: 4,
+                        title: "FOTO 04 - Balcão de Recepção",
+                        desc: "Vista geral, computador, área de trabalho, organização",
+                        tips: "💡 Posicione-se de frente. Foto ampla pegando todo o ambiente.",
+                        critical: false
+                    },
+                    {
+                        id: 5,
+                        title: "FOTO 05 - Sala de Espera",
+                        desc: "Poltronas, TV, ambiente organizado e limpo",
+                        tips: "💡 NÃO fotografe pacientes! Agende horário com menos movimento.",
+                        alert: "⚠️ ATENÇÃO: Não fotografar pessoas (LGPD)",
+                        critical: false
+                    }
+                ]
+            },
+            {
+                id: 3,
+                title: "🩺 CONSULTÓRIO MÉDICO",
+                count: 1,
+                type: "normal",
+                items: [
+                    {
+                        id: 6,
+                        title: "FOTO 06 - Consultório (visão geral)",
+                        desc: "Mesa, cadeiras, maca de exame, organização do ambiente",
+                        tips: "💡 Tire de um canto (pega mais área). Evite documentos visíveis.",
+                        critical: false
+                    }
+                ]
+            },
+            {
+                id: 4,
+                title: "⚕️ SALA DE PROCEDIMENTOS",
+                count: 4,
+                type: "important",
+                items: [
+                    {
+                        id: 7,
+                        title: "FOTO 07 - Sala de Procedimentos (visão geral)",
+                        desc: "Vista ampla: maca, foco, armários, bancada, COLETORES visíveis",
+                        tips: "💡 Tire diagonal de uma quina. Acenda todas as luzes. Inclua coletores!",
+                        critical: false
+                    },
+                    {
+                        id: 8,
+                        title: "FOTO 08 - Maca Elétrica e Foco Cirúrgico",
+                        desc: "Equipamentos principais, estado de conservação",
+                        tips: "💡 Mostre que equipamentos estão em bom estado e funcionais.",
+                        critical: false
+                    },
+                    {
+                        id: 9,
+                        title: "FOTO 09 - Armários de Materiais",
+                        desc: "Armários para materiais estéreis, organização externa",
+                        tips: "💡 Pergunte se pode fotografar interior. Se não, só fechado.",
+                        critical: false
+                    },
+                    {
+                        id: 10,
+                        title: "FOTO 10 - Bancada com Pia",
+                        desc: "Pia, torneira (pedal?), sabão, papel toalha, bancada limpa",
+                        tips: "💡 Se torneira for com pedal, tire close! É um diferencial positivo.",
+                        critical: false
+                    }
+                ]
+            },
+            {
+                id: 5,
+                title: "♻️ COLETORES DE RESÍDUOS",
+                count: 5,
+                type: "critical",
+                items: [
+                    {
+                        id: 11,
+                        title: "FOTO 11 - Coletor Infectante (Grupo A) - Geral ⭐",
+                        desc: "Saco BRANCO, símbolo ☣️ visível, tampa com pedal, nível até 2/3",
+                        tips: "💡 1-2m de distância. Mostre lixeira completa (base até tampa).",
+                        analysis: "Verificar: Símbolo é IMPRESSO? Tampa tem pedal? Nível adequado?",
+                        critical: true
+                    },
+                    {
+                        id: 12,
+                        title: "FOTO 12 - Infectante - Close no Símbolo ⭐",
+                        desc: "Símbolo ☣️ bem nítido. VERIFICAR: impresso ou adesivo?",
+                        tips: "💡 30-50cm de distância. Foto deve ficar legível!",
+                        alert: "⚠️ Se símbolo for ADESIVO = NÃO CONFORMIDADE!",
+                        critical: true
+                    },
+                    {
+                        id: 13,
+                        title: "FOTO 13 - Coletor Comum (Grupo D) ⭐",
+                        desc: "Saco PRETO/CINZA, SEM símbolo, SEPARADO do infectante",
+                        tips: "💡 Mostre que as duas lixeiras estão claramente separadas.",
+                        alert: "⚠️ GRAVE: Resíduos infectantes no comum = MISTURA PROIBIDA!",
+                        critical: true
+                    },
+                    {
+                        id: 14,
+                        title: "FOTO 14 - Perfurocortante FECHADO ⭐⭐⭐",
+                        desc: "Cor AMARELA, material rígido, TAMPA VEDADA, até 2/3",
+                        tips: "💡 0,5-1m. Verifique visualmente se tampa está bem vedada!",
+                        alert: "🚨 NUNCA fotografe ABERTO! Risco de acidente!",
+                        analysis: "Tampa fechada? Cor amarela? Nível adequado? Sem avarias?",
+                        critical: true
+                    },
+                    {
+                        id: 15,
+                        title: "FOTO 15 - Perfurocortante - Etiqueta ⭐⭐⭐",
+                        desc: "☣️, 'PERFUROCORTANTE', 'SALA 1701', capacidade, nível máximo",
+                        tips: "💡 20-30cm bem de perto. Deve ficar 100% legível!",
+                        alert: "⚠️ Se faltar informação na etiqueta = não conformidade!",
+                        critical: true
+                    }
+                ]
+            },
+            {
+                id: 6,
+                title: "🧼 EXPURGO",
+                count: 3,
+                type: "important",
+                items: [
+                    {
+                        id: 16,
+                        title: "FOTO 16 - Porta do Expurgo",
+                        desc: "Identificação 'EXPURGO' ou 'SALA DE UTILIDADES' visível",
+                        tips: "💡 Porta externa com identificação legível.",
+                        critical: false
+                    },
+                    {
+                        id: 17,
+                        title: "FOTO 17 - Expurgo (visão geral interna)",
+                        desc: "Pia, prateleiras, produtos de limpeza, organização",
+                        tips: "💡 Vista ampla. Ambiente deve estar arrumado.",
+                        critical: false
+                    },
+                    {
+                        id: 18,
+                        title: "FOTO 18 - Pia do Expurgo (detalhe) ⭐",
+                        desc: "Close pia e torneira. Verificar: pedal/alavanca/manual?",
+                        tips: "💡 Torneira com pedal = ÓTIMO! Mencione no relatório.",
+                        critical: true
+                    }
+                ]
+            },
+            {
+                id: 7,
+                title: "🚽 BANHEIROS",
+                count: 1,
+                type: "normal",
+                items: [
+                    {
+                        id: 19,
+                        title: "FOTO 19 - Banheiro (visão geral)",
+                        desc: "Vaso, pia, revestimento cerâmico, limpeza e conservação",
+                        tips: "💡 Fotografe com banheiro limpo e arrumado.",
+                        critical: false
+                    }
+                ]
+            },
+            {
+                id: 8,
+                title: "📦 ARMAZ. TEMPORÁRIO - 17º",
+                count: 3,
+                type: "critical",
+                items: [
+                    {
+                        id: 20,
+                        title: "FOTO 20 - Porta/Área do Armazenamento",
+                        desc: "Local no 17º andar, identificação, localização",
+                        tips: "💡 Pode ser sala, quartinho ou área no corredor do andar.",
+                        critical: false
+                    },
+                    {
+                        id: 21,
+                        title: "FOTO 21 - BOMBONA AZUL 50L ⭐⭐⭐",
+                        desc: "Cor AZUL, TAMPA HERMÉTICA!, etiqueta 'SALA 1701', ☣️",
+                        tips: "💡 0,5-1m. Foto deve mostrar CLARAMENTE que tampa está vedada!",
+                        alert: "🚨 GRAVÍSSIMO: Bombona ABERTA/MAL VEDADA = risco de contaminação!",
+                        analysis: "Pergunte ao responsável: 'A bombona está bem fechada?'",
+                        critical: true
+                    },
+                    {
+                        id: 22,
+                        title: "FOTO 22 - Lixeira Comum (se houver)",
+                        desc: "Saco preto (Grupo D), separada do infectante",
+                        tips: "💡 Mostrar segregação também no armazenamento temporário.",
+                        critical: false
+                    }
+                ]
+            },
+            {
+                id: 9,
+                title: "🏢 ABRIGO EXTERNO - TÉRREO",
+                count: 7,
+                type: "critical",
+                items: [
+                    {
+                        id: 23,
+                        title: "FOTO 23 - Portão Rua Miosótis",
+                        desc: "Vista externa, portão onde caminhão para, acesso facilitado",
+                        tips: "💡 Tire da calçada mostrando portão e acesso.",
+                        critical: false
+                    },
+                    {
+                        id: 24,
+                        title: "FOTO 24 - Porta Interna do Abrigo ⭐",
+                        desc: "Vista de dentro do edifício, identificação 'RESÍDUOS', ☣️",
+                        tips: "💡 Entrada mostrando identificação clara.",
+                        critical: true
+                    },
+                    {
+                        id: 25,
+                        title: "FOTO 25 - Interior do Abrigo (geral) ⭐⭐⭐",
+                        desc: "SEPARAÇÃO RSS/comum!, piso impermeável, paredes, limpeza",
+                        tips: "💡 Tire de cima para baixo. Acenda TODAS as luzes!",
+                        analysis: "Separação clara? Piso lavável? Presença de vetores? Recipientes fechados?",
+                        critical: true
+                    },
+                    {
+                        id: 26,
+                        title: "FOTO 26 - Piso e Drenagem ⭐",
+                        desc: "Piso impermeável (cerâmica/cimento), ralo sifonado, escoamento",
+                        tips: "💡 Foto do chão mostrando tipo de piso e drenagem.",
+                        critical: true
+                    },
+                    {
+                        id: 27,
+                        title: "FOTO 27 - Ventilação e TELA ⭐⭐",
+                        desc: "Abertura ventilação, TELA proteção insetos/roedores ÍNTEGRA",
+                        tips: "💡 Close na abertura. Verifique se há rasgos na tela!",
+                        alert: "🚨 GRAVE: Falta de tela ou tela rasgada = entrada de vetores!",
+                        critical: true
+                    },
+                    {
+                        id: 28,
+                        title: "FOTO 28 - Porta Específica para RSS ⭐",
+                        desc: "Área/porta com ☣️, identificação 'GRUPO A' ou 'RSS', separada",
+                        tips: "💡 Mostrar segregação no abrigo externo.",
+                        critical: true
+                    },
+                    {
+                        id: 29,
+                        title: "FOTO 29 - Ponto de Água",
+                        desc: "Torneira/mangueira para higienização, lavagem de coletores",
+                        tips: "💡 Mostrar que é possível higienizar recipientes no local.",
+                        critical: false
+                    }
+                ]
+            },
+            {
+                id: 10,
+                title: "📄 DOCUMENTAÇÃO TÉCNICA",
+                count: 4,
+                type: "important",
+                items: [
+                    {
+                        id: 30,
+                        title: "FOTO 30 - Certificado Reservatório ⭐",
+                        desc: "SANITIZAR, higienização Abr/2025, validade 01/10/2025",
+                        tips: "💡 Documento completo e legível. Verifique validade!",
+                        analysis: "Dentro da validade na data da visita?",
+                        critical: true
+                    },
+                    {
+                        id: 31,
+                        title: "FOTO 31 - Certificado Dedetização ⭐",
+                        desc: "T C Costa, data Abr/2025, validade 08/10/2025",
+                        tips: "💡 Foto legível de todo o certificado. Verifique validade!",
+                        analysis: "Dentro da validade na data da visita?",
+                        critical: true
+                    },
+                    {
+                        id: 32,
+                        title: "FOTO 32 - Contrato NATUS Ambiental",
+                        desc: "1ª página, coleta mensal de RSS (Grupos A e E)",
+                        tips: "💡 Não precisa contrato inteiro, só 1ª página identificando serviço.",
+                        critical: false
+                    },
+                    {
+                        id: 33,
+                        title: "FOTO 33 - Licença da NATUS (se disponível)",
+                        desc: "Licença ambiental da empresa coletora, CNPJ, validade",
+                        tips: "💡 Se não tiverem, anote no relatório 'não disponibilizado'.",
+                        critical: false
+                    }
+                ]
+            }
+        ];
+
+        // STATE
+        let appState = {
+            itemsChecked: {},
+            itemsPhotos: {},
+            itemsNotes: {},
+            startTime: null
+        };
+
+        // INIT
+        function startApp() {
+            document.getElementById('landing').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            document.getElementById('bottomNav').style.display = 'flex';
+            document.getElementById('fabContainer').style.display = 'flex';
+            
+            appState.startTime = new Date();
             loadState();
-            updateProgress();
-        });
+            renderSections();
+            updateStats();
+        }
 
-        // Alternar seção
-        function toggleSection(header) {
-            const content = header.nextElementSibling;
-            const icon = header.querySelector('.toggle-icon');
+        // RENDER SECTIONS
+        function renderSections() {
+            const container = document.getElementById('sectionsContainer');
+            container.innerHTML = '';
             
-            if (content.classList.contains('active')) {
-                content.classList.remove('active');
-                icon.classList.remove('rotated');
+            sections.forEach(section => {
+                const sectionEl = document.createElement('div');
+                sectionEl.className = 'section';
+                sectionEl.innerHTML = `
+                    <div class="section-header ${section.type}" onclick="toggleSection(${section.id})">
+                        <div class="section-title">
+                            <span>${section.title}</span>
+                            <span class="badge">${section.count}</span>
+                        </div>
+                        <span class="arrow" id="arrow-${section.id}">▼</span>
+                    </div>
+                    <div class="section-content" id="section-${section.id}">
+                        ${section.items.map(item => renderItem(item)).join('')}
+                    </div>
+                `;
+                container.appendChild(sectionEl);
+            });
+        }
+
+        function renderItem(item) {
+            const isChecked = appState.itemsChecked[item.id] || false;
+            const photos = appState.itemsPhotos[item.id] || [];
+            const notes = appState.itemsNotes[item.id] || '';
+            
+            return `
+                <div class="item ${isChecked ? 'checked' : ''}" id="item-${item.id}">
+                    <div class="item-header" onclick="toggleCheck(${item.id})">
+                        <div class="checkbox-custom ${isChecked ? 'checked' : ''}" id="check-${item.id}"></div>
+                        <div class="item-info">
+                            <div class="item-title">
+                                ${item.title}
+                                ${item.critical ? '<span class="star">⭐</span>' : ''}
+                            </div>
+                            <div class="item-desc">${item.desc}</div>
+                        </div>
+                        <button class="expand-btn" onclick="event.stopPropagation(); toggleDetails(${item.id})">+</button>
+                    </div>
+                    <div class="item-details" id="details-${item.id}">
+                        <div class="item-details-content">
+                            ${item.alert ? `<div class="alert-box ${item.alert.includes('GRAVE') ? 'alert-danger' : 'alert-warning'}">${item.alert}</div>` : ''}
+                            
+                            <div class="detail-section">
+                                <div class="detail-title">💡 Dicas Técnicas</div>
+                                <div class="detail-text">${item.tips}</div>
+                            </div>
+                            
+                            ${item.analysis ? `
+                            <div class="detail-section">
+                                <div class="detail-title">🔍 Análise Crítica</div>
+                                <div class="detail-text">${item.analysis}</div>
+                            </div>
+                            ` : ''}
+                            
+                            <div class="detail-section photo-section">
+                                <div class="detail-title">📸 Fotos (${photos.length})</div>
+                                <div class="photo-upload-area" onclick="openCamera(${item.id})" 
+                                     ondrop="dropPhoto(event, ${item.id})" 
+                                     ondragover="event.preventDefault(); event.currentTarget.classList.add('dragover')"
+                                     ondragleave="event.currentTarget.classList.remove('dragover')">
+                                    <div class="upload-icon">📷</div>
+                                    <div class="upload-text">Clique para adicionar foto</div>
+                                    <div class="upload-hint">ou arraste e solte aqui</div>
+                                </div>
+                                <input type="file" id="file-${item.id}" accept="image/*" capture="environment" 
+                                       onchange="handlePhoto(event, ${item.id})" multiple>
+                                <div class="photo-preview-grid" id="preview-${item.id}">
+                                    ${photos.map((photo, idx) => `
+                                        <div class="photo-preview">
+                                            <img src="${photo}" alt="Foto ${idx+1}">
+                                            <button class="photo-remove" onclick="removePhoto(${item.id}, ${idx})">×</button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                ${photos.length > 0 ? `<div class="photo-count">✓ ${photos.length} foto(s) adicionada(s)</div>` : ''}
+                            </div>
+                            
+                            <div class="detail-section">
+                                <div class="detail-title">📝 Anotações</div>
+                                <textarea class="notes-textarea" 
+                                          placeholder="Escreva suas observações aqui..."
+                                          onchange="saveNote(${item.id}, this.value)">${notes}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // TOGGLE FUNCTIONS
+        function toggleSection(sectionId) {
+            const content = document.getElementById(`section-${sectionId}`);
+            const arrow = document.getElementById(`arrow-${sectionId}`);
+            
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                arrow.classList.remove('open');
             } else {
-                content.classList.add('active');
-                icon.classList.add('rotated');
+                content.classList.add('show');
+                arrow.classList.add('open');
             }
         }
 
-        // Expandir todas
+        function toggleCheck(itemId) {
+            appState.itemsChecked[itemId] = !appState.itemsChecked[itemId];
+            
+            const item = document.getElementById(`item-${itemId}`);
+            const checkbox = document.getElementById(`check-${itemId}`);
+            
+            if (appState.itemsChecked[itemId]) {
+                item.classList.add('checked');
+                checkbox.classList.add('checked');
+            } else {
+                item.classList.remove('checked');
+                checkbox.classList.remove('checked');
+            }
+            
+            updateStats();
+            saveState();
+        }
+
+        function toggleDetails(itemId) {
+            const details = document.getElementById(`details-${itemId}`);
+            details.classList.toggle('show');
+        }
+
+        // PHOTO FUNCTIONS
+        function openCamera(itemId) {
+            document.getElementById(`file-${itemId}`).click();
+        }
+
+        function handlePhoto(event, itemId) {
+            const files = event.target.files;
+            if (!files.length) return;
+            
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (!appState.itemsPhotos[itemId]) {
+                        appState.itemsPhotos[itemId] = [];
+                    }
+                    appState.itemsPhotos[itemId].push(e.target.result);
+                    saveState();
+                    updatePhotoPreview(itemId);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function dropPhoto(event, itemId) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+            
+            const files = event.dataTransfer.files;
+            if (!files.length) return;
+            
+            Array.from(files).forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (!appState.itemsPhotos[itemId]) {
+                        appState.itemsPhotos[itemId] = [];
+                    }
+                    appState.itemsPhotos[itemId].push(e.target.result);
+                    saveState();
+                    updatePhotoPreview(itemId);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function removePhoto(itemId, photoIndex) {
+            if (confirm('Remover esta foto?')) {
+                appState.itemsPhotos[itemId].splice(photoIndex, 1);
+                saveState();
+                updatePhotoPreview(itemId);
+            }
+        }
+
+        function updatePhotoPreview(itemId) {
+            const photos = appState.itemsPhotos[itemId] || [];
+            const preview = document.getElementById(`preview-${itemId}`);
+            
+            preview.innerHTML = photos.map((photo, idx) => `
+                <div class="photo-preview">
+                    <img src="${photo}" alt="Foto ${idx+1}">
+                    <button class="photo-remove" onclick="removePhoto(${itemId}, ${idx})">×</button>
+                </div>
+            `).join('');
+            
+            // Update count
+            const detail = preview.closest('.photo-section');
+            const existingCount = detail.querySelector('.photo-count');
+            if (existingCount) existingCount.remove();
+            
+            if (photos.length > 0) {
+                const countDiv = document.createElement('div');
+                countDiv.className = 'photo-count';
+                countDiv.textContent = `✓ ${photos.length} foto(s) adicionada(s)`;
+                preview.after(countDiv);
+            }
+        }
+
+        // NOTES
+        function saveNote(itemId, note) {
+            appState.itemsNotes[itemId] = note;
+            saveState();
+        }
+
+        // STATS
+        function updateStats() {
+            const total = 33;
+            const checked = Object.values(appState.itemsChecked).filter(v => v).length;
+            const percentage = Math.round((checked / total) * 100);
+            
+            document.getElementById('statDone').textContent = checked;
+            document.getElementById('progressBar').style.width = percentage + '%';
+            document.getElementById('progressBar').textContent = percentage + '%';
+            
+            // Critical items
+            let criticalChecked = 0;
+            sections.forEach(section => {
+                section.items.forEach(item => {
+                    if (item.critical && appState.itemsChecked[item.id]) {
+                        criticalChecked++;
+                    }
+                });
+            });
+            
+            document.getElementById('statCritical').textContent = `${criticalChecked}/13`;
+        }
+
+        // EXPAND/COLLAPSE
         function expandAll() {
-            document.querySelectorAll('.section-content').forEach(content => {
-                content.classList.add('active');
-            });
-            document.querySelectorAll('.toggle-icon').forEach(icon => {
-                icon.classList.add('rotated');
+            sections.forEach(section => {
+                const content = document.getElementById(`section-${section.id}`);
+                const arrow = document.getElementById(`arrow-${section.id}`);
+                content.classList.add('show');
+                arrow.classList.add('open');
             });
         }
 
-        // Fechar todas
         function collapseAll() {
-            document.querySelectorAll('.section-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.querySelectorAll('.toggle-icon').forEach(icon => {
-                icon.classList.remove('rotated');
+            sections.forEach(section => {
+                const content = document.getElementById(`section-${section.id}`);
+                const arrow = document.getElementById(`arrow-${section.id}`);
+                content.classList.remove('show');
+                arrow.classList.remove('open');
             });
         }
 
-        // Atualizar progresso
-        function updateProgress(checkbox, isCritical = false) {
-            const checkboxes = document.querySelectorAll('.photo-item input[type="checkbox"]');
-            const totalItems = checkboxes.length;
-            const checkedItems = document.querySelectorAll('.photo-item input[type="checkbox"]:checked').length;
-            const percentage = Math.round((checkedItems / totalItems) * 100);
+        // SCROLL
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // SUMMARY
+        function openSummary() {
+            const checked = Object.values(appState.itemsChecked).filter(v => v).length;
+            const total = 33;
+            const percentage = Math.round((checked / total) * 100);
             
-            // Atualizar barra de progresso
-            const progressBar = document.getElementById('progressBar');
-            progressBar.style.width = percentage + '%';
-            progressBar.textContent = percentage + '%';
+            let criticalChecked = 0;
+            let totalPhotos = 0;
+            let notesCount = 0;
             
-            // Atualizar estatísticas
-            document.getElementById('totalPhotos').textContent = checkedItems;
-            
-            // Contar itens críticos (aqueles com ⭐ no título)
-            const criticalCheckboxes = Array.from(checkboxes).filter(cb => {
-                const title = cb.parentElement.querySelector('.photo-title').textContent;
-                return title.includes('⭐');
+            sections.forEach(section => {
+                section.items.forEach(item => {
+                    if (item.critical && appState.itemsChecked[item.id]) criticalChecked++;
+                    if (appState.itemsPhotos[item.id]) totalPhotos += appState.itemsPhotos[item.id].length;
+                    if (appState.itemsNotes[item.id]) notesCount++;
+                });
             });
-            const criticalChecked = criticalCheckboxes.filter(cb => cb.checked).length;
-            document.getElementById('criticalDone').textContent = criticalChecked + '/' + criticalCheckboxes.length;
             
-            // Marcar item visualmente
-            if (checkbox) {
-                const photoItem = checkbox.closest('.photo-item');
-                if (checkbox.checked) {
-                    photoItem.classList.add('checked');
-                } else {
-                    photoItem.classList.remove('checked');
+            const duration = appState.startTime ? 
+                Math.round((new Date() - appState.startTime) / 60000) : 0;
+            
+            document.getElementById('summaryContent').innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 48px; font-weight: 700; color: var(--primary);">${percentage}%</div>
+                    <div style="font-size: 14px; color: #64748b;">Progresso Total</div>
+                </div>
+                
+                <div style="background: var(--light); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>✓ Itens concluídos:</span>
+                        <strong>${checked} / ${total}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>⭐ Itens críticos:</span>
+                        <strong>${criticalChecked} / 13</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>📸 Total de fotos:</span>
+                        <strong>${totalPhotos}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>📝 Anotações feitas:</span>
+                        <strong>${notesCount}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>⏱️ Tempo decorrido:</span>
+                        <strong>${duration} min</strong>
+                    </div>
+                </div>
+                
+                <div style="background: #fef3c7; padding: 12px; border-radius: 10px; font-size: 12px;">
+                    <strong>💡 Dica:</strong> Revise os itens críticos ⭐ antes de finalizar!
+                </div>
+            `;
+            
+            document.getElementById('summaryModal').classList.add('active');
+        }
+
+        function closeSummary() {
+            document.getElementById('summaryModal').classList.remove('active');
+        }
+
+        function generateReport() {
+            exportCompleteReport();
+            closeSummary();
+        }
+
+        // EXPORT
+        function openExportModal() {
+            document.getElementById('exportModal').classList.add('active');
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('active');
+            document.getElementById('exportProgress').style.display = 'none';
+        }
+
+        // EXPORT COMPLETE REPORT WITH IMAGES
+        async function exportCompleteReport() {
+            const progressDiv = document.getElementById('exportProgress');
+            const statusDiv = document.getElementById('exportStatus');
+            progressDiv.style.display = 'block';
+
+            try {
+                statusDiv.textContent = 'Criando estrutura de pastas...';
+
+                const zip = new JSZip();
+                const reportFolder = zip.folder('Relatorio_RSS_' + new Date().toISOString().split('T')[0]);
+
+                // Create summary data
+                const checked = Object.values(appState.itemsChecked).filter(v => v).length;
+                const total = 33;
+                const percentage = Math.round((checked / total) * 100);
+
+                let criticalChecked = 0;
+                let totalPhotos = 0;
+                let notesCount = 0;
+
+                sections.forEach(section => {
+                    section.items.forEach(item => {
+                        if (item.critical && appState.itemsChecked[item.id]) criticalChecked++;
+                        if (appState.itemsPhotos[item.id]) totalPhotos += appState.itemsPhotos[item.id].length;
+                        if (appState.itemsNotes[item.id] && appState.itemsNotes[item.id].trim()) notesCount++;
+                    });
+                });
+
+                // Create README.txt with summary
+                const readmeContent = `RELATÓRIO FOTOGRÁFICO RSS - CLÍNICA DR. CLÁUDIO EULÁLIO
+Sala 1701 - Diamond Center - Teresina/PI
+Data de Exportação: ${new Date().toLocaleString('pt-BR')}
+
+========================================
+RESUMO DA INSPEÇÃO
+========================================
+
+Progresso: ${percentage}%
+Itens Concluídos: ${checked} / ${total}
+Itens Críticos Concluídos: ${criticalChecked} / 13
+Total de Fotos: ${totalPhotos}
+Anotações Registradas: ${notesCount}
+Tempo de Inspeção: ${appState.startTime ? Math.round((new Date() - new Date(appState.startTime)) / 60000) : 0} minutos
+
+========================================
+ESTRUTURA DE PASTAS
+========================================
+
+Cada item possui uma pasta nomeada com seu código e título.
+As fotos estão numeradas sequencialmente dentro de cada pasta.
+As anotações estão no arquivo "anotacoes.txt" dentro de cada pasta (quando houver).
+
+========================================
+`;
+
+                reportFolder.file('LEIA-ME.txt', readmeContent);
+
+                statusDiv.textContent = 'Organizando fotos por item...';
+
+                // Process each section and item
+                let processedItems = 0;
+                const totalItems = sections.reduce((sum, section) => sum + section.items.length, 0);
+
+                for (const section of sections) {
+                    for (const item of section.items) {
+                        processedItems++;
+                        statusDiv.textContent = `Processando item ${processedItems}/${totalItems}...`;
+
+                        const photos = appState.itemsPhotos[item.id] || [];
+                        const notes = appState.itemsNotes[item.id] || '';
+                        const isChecked = appState.itemsChecked[item.id] || false;
+
+                        // Only create folder if item has photos or notes
+                        if (photos.length > 0 || (notes && notes.trim())) {
+                            // Create safe folder name
+                            const folderName = sanitizeFilename(
+                                `${String(item.id).padStart(2, '0')}_${item.title.replace(/FOTO \d+ - /g, '')}`
+                            );
+                            const itemFolder = reportFolder.folder(folderName);
+
+                            // Add item info
+                            let itemInfo = `ITEM: ${item.title}\n`;
+                            itemInfo += `Status: ${isChecked ? '✓ CONCLUÍDO' : '☐ PENDENTE'}\n`;
+                            itemInfo += `Crítico: ${item.critical ? 'SIM ⭐' : 'NÃO'}\n`;
+                            itemInfo += `Descrição: ${item.desc}\n`;
+                            itemInfo += `Dicas: ${item.tips}\n`;
+                            if (item.alert) {
+                                itemInfo += `Alerta: ${item.alert}\n`;
+                            }
+                            if (item.analysis) {
+                                itemInfo += `Análise: ${item.analysis}\n`;
+                            }
+                            itemInfo += `\nQuantidade de Fotos: ${photos.length}\n`;
+                            itemInfo += `\n${'='.repeat(50)}\n`;
+
+                            if (notes && notes.trim()) {
+                                itemInfo += `\nANOTAÇÕES DA INSPEÇÃO:\n${'='.repeat(50)}\n${notes}\n`;
+                            }
+
+                            itemFolder.file('info.txt', itemInfo);
+
+                            // Add photos
+                            for (let i = 0; i < photos.length; i++) {
+                                const photoData = photos[i];
+                                // Remove data URL prefix and convert base64 to binary
+                                const base64Data = photoData.split(',')[1];
+                                const photoName = `foto_${String(i + 1).padStart(2, '0')}.jpg`;
+                                itemFolder.file(photoName, base64Data, {base64: true});
+                            }
+                        }
+                    }
                 }
-                saveState();
+
+                // Create detailed report
+                statusDiv.textContent = 'Gerando relatório detalhado...';
+                let detailedReport = `RELATÓRIO DETALHADO - INSPEÇÃO RSS\n`;
+                detailedReport += `${'='.repeat(80)}\n\n`;
+
+                sections.forEach(section => {
+                    detailedReport += `\n${section.title}\n`;
+                    detailedReport += `${'-'.repeat(80)}\n`;
+
+                    section.items.forEach(item => {
+                        const isChecked = appState.itemsChecked[item.id] || false;
+                        const photos = appState.itemsPhotos[item.id] || [];
+                        const notes = appState.itemsNotes[item.id] || '';
+
+                        detailedReport += `\n${isChecked ? '✓' : '☐'} ${item.title}\n`;
+                        detailedReport += `   ${item.desc}\n`;
+                        detailedReport += `   Fotos: ${photos.length} | Crítico: ${item.critical ? 'SIM ⭐' : 'NÃO'}\n`;
+                        if (notes && notes.trim()) {
+                            detailedReport += `   Anotações: ${notes.substring(0, 100)}${notes.length > 100 ? '...' : ''}\n`;
+                        }
+                    });
+
+                    detailedReport += `\n`;
+                });
+
+                reportFolder.file('relatorio_completo.txt', detailedReport);
+
+                // Generate ZIP file
+                statusDiv.textContent = 'Gerando arquivo ZIP...';
+                const blob = await zip.generateAsync({
+                    type: 'blob',
+                    compression: 'DEFLATE',
+                    compressionOptions: { level: 6 }
+                });
+
+                // Download ZIP
+                statusDiv.textContent = 'Iniciando download...';
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Relatorio_RSS_${new Date().toISOString().split('T')[0]}_${Date.now()}.zip`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                // Success message
+                statusDiv.textContent = 'Relatório exportado com sucesso!';
+                setTimeout(() => {
+                    closeExportModal();
+                }, 2000);
+
+            } catch (error) {
+                console.error('Erro ao exportar relatório:', error);
+                statusDiv.textContent = 'Erro ao gerar relatório. Tente novamente.';
+                statusDiv.style.color = 'var(--danger)';
             }
         }
 
-        // Salvar estado no localStorage
+        // Helper function to sanitize filenames
+        function sanitizeFilename(filename) {
+            return filename
+                .replace(/[<>:"/\\|?*]/g, '_')
+                .replace(/\s+/g, '_')
+                .replace(/_+/g, '_')
+                .substring(0, 100);
+        }
+
+        function downloadJSON() {
+            const data = {
+                ...appState,
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `relatorio-rss-${Date.now()}.json`;
+            a.click();
+            
+            closeExportModal();
+        }
+
+        function shareProgress() {
+            const checked = Object.values(appState.itemsChecked).filter(v => v).length;
+            const percentage = Math.round((checked / 33) * 100);
+            
+            const text = `📸 Relatório Fotográfico RSS\n\n✓ Progresso: ${percentage}%\n✓ ${checked}/33 itens concluídos\n\n#RSS #Inspeção #ClínicaEulálio`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Relatório Fotográfico RSS',
+                    text: text
+                });
+            } else {
+                navigator.clipboard.writeText(text);
+                alert('Texto copiado para área de transferência!');
+            }
+            
+            closeExportModal();
+        }
+
+        // STORAGE
         function saveState() {
-            const checkboxes = document.querySelectorAll('.photo-item input[type="checkbox"]');
-            const state = [];
-            checkboxes.forEach((cb, index) => {
-                state.push(cb.checked);
-            });
-            localStorage.setItem('checklistState', JSON.stringify(state));
-            
-            // Salvar também as notas
-            const textareas = document.querySelectorAll('.notes-area');
-            const notes = [];
-            textareas.forEach(ta => {
-                notes.push(ta.value);
-            });
-            localStorage.setItem('checklistNotes', JSON.stringify(notes));
+            localStorage.setItem('appState', JSON.stringify(appState));
         }
 
-        // Carregar estado do localStorage
         function loadState() {
-            const savedState = localStorage.getItem('checklistState');
-            if (savedState) {
-                const state = JSON.parse(savedState);
-                const checkboxes = document.querySelectorAll('.photo-item input[type="checkbox"]');
-                checkboxes.forEach((cb, index) => {
-                    if (state[index]) {
-                        cb.checked = true;
-                        cb.closest('.photo-item').classList.add('checked');
-                    }
-                });
-            }
-            
-            const savedNotes = localStorage.getItem('checklistNotes');
-            if (savedNotes) {
-                const notes = JSON.parse(savedNotes);
-                const textareas = document.querySelectorAll('.notes-area');
-                textareas.forEach((ta, index) => {
-                    if (notes[index]) {
-                        ta.value = notes[index];
-                    }
-                });
+            const saved = localStorage.getItem('appState');
+            if (saved) {
+                appState = JSON.parse(saved);
             }
         }
 
-        // Salvar notas automaticamente
-        document.addEventListener('input', function(e) {
-            if (e.target.classList.contains('notes-area')) {
-                saveState();
+        // Check if JSZip is loaded
+        window.addEventListener('load', () => {
+            if (typeof JSZip === 'undefined') {
+                console.warn('JSZip não carregado. Funcionalidade de exportação ZIP pode não funcionar.');
             }
         });
 
-        // Limpar dados (para debug)
-        function clearData() {
-            if (confirm('Tem certeza que deseja limpar todos os dados?')) {
-                localStorage.removeItem('checklistState');
-                localStorage.removeItem('checklistNotes');
-                location.reload();
-            }
+        // INIT ON LOAD
+        if (localStorage.getItem('appState')) {
+            // Se já tem dados salvos, pular landing
+            startApp();
         }
     </script>
 </body>
