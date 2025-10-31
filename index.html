@@ -500,9 +500,15 @@
         
         .photo-preview-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
             margin-top: 16px;
+        }
+
+        @media (max-width: 480px) {
+            .photo-preview-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         .photo-preview {
@@ -1247,15 +1253,34 @@
 
         // INIT
         function startApp() {
+            console.log('🚀 Iniciando aplicação...');
+
             document.getElementById('landing').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             document.getElementById('bottomNav').style.display = 'flex';
             document.getElementById('fabContainer').style.display = 'flex';
-            
-            appState.startTime = new Date();
+
+            if (!appState.startTime) {
+                appState.startTime = new Date();
+            }
+
             loadState();
             renderSections();
             updateStats();
+
+            // Update all photo previews after rendering
+            setTimeout(() => {
+                console.log('🔄 Atualizando todos os previews...');
+                sections.forEach(section => {
+                    section.items.forEach(item => {
+                        if (appState.itemsPhotos[item.id] && appState.itemsPhotos[item.id].length > 0) {
+                            updatePhotoPreview(item.id);
+                        }
+                    });
+                });
+            }, 500);
+
+            console.log('✅ Aplicação iniciada');
         }
 
         // RENDER SECTIONS
@@ -1395,50 +1420,73 @@
 
         async function handlePhoto(event, itemId) {
             const files = event.target.files;
-            if (!files.length) return;
-
-            // Show loading indicator
-            const preview = document.getElementById(`preview-${itemId}`);
-            const originalContent = preview.innerHTML;
-
-            if (!appState.itemsPhotos[itemId]) {
-                appState.itemsPhotos[itemId] = [];
+            if (!files || files.length === 0) {
+                console.log('Nenhum arquivo selecionado');
+                return;
             }
 
-            const fileArray = Array.from(files);
+            console.log(`📸 Processando ${files.length} foto(s) para item ${itemId}`);
 
-            // Show loading message
-            if (fileArray.length > 1) {
-                const loadingDiv = document.createElement('div');
-                loadingDiv.className = 'photo-loading';
-                loadingDiv.style.cssText = 'text-align: center; padding: 20px; color: var(--text-secondary); font-size: 14px;';
-                loadingDiv.textContent = `Processando ${fileArray.length} foto(s)...`;
-                preview.appendChild(loadingDiv);
-            }
-
-            // Process all files sequentially
-            for (let i = 0; i < fileArray.length; i++) {
-                const file = fileArray[i];
-                try {
-                    const result = await readFileAsDataURL(file);
-                    appState.itemsPhotos[itemId].push(result);
-
-                    // Update loading message
-                    const loadingDiv = preview.querySelector('.photo-loading');
-                    if (loadingDiv && fileArray.length > 1) {
-                        loadingDiv.textContent = `Processando foto ${i + 1} de ${fileArray.length}...`;
-                    }
-                } catch (error) {
-                    console.error('Erro ao processar imagem:', error);
+            try {
+                // Initialize photos array if needed
+                if (!appState.itemsPhotos[itemId]) {
+                    appState.itemsPhotos[itemId] = [];
                 }
+
+                const fileArray = Array.from(files);
+                const preview = document.getElementById(`preview-${itemId}`);
+
+                // Show loading indicator for multiple files
+                if (fileArray.length > 1) {
+                    const loadingDiv = document.createElement('div');
+                    loadingDiv.className = 'photo-loading';
+                    loadingDiv.style.cssText = 'text-align: center; padding: 20px; color: var(--primary); font-size: 14px; font-weight: 500;';
+                    loadingDiv.innerHTML = `⏳ Processando ${fileArray.length} foto(s)...`;
+                    preview.innerHTML = ''; // Clear existing content
+                    preview.appendChild(loadingDiv);
+                }
+
+                // Process all files
+                let successCount = 0;
+                for (let i = 0; i < fileArray.length; i++) {
+                    const file = fileArray[i];
+
+                    // Validate file type
+                    if (!file.type.startsWith('image/')) {
+                        console.warn(`Arquivo ignorado (não é imagem): ${file.name}`);
+                        continue;
+                    }
+
+                    try {
+                        console.log(`  Processando foto ${i + 1}/${fileArray.length}: ${file.name}`);
+                        const result = await readFileAsDataURL(file);
+                        appState.itemsPhotos[itemId].push(result);
+                        successCount++;
+
+                        // Update loading message
+                        const loadingDiv = preview.querySelector('.photo-loading');
+                        if (loadingDiv && fileArray.length > 1) {
+                            loadingDiv.innerHTML = `⏳ Processando foto ${i + 1} de ${fileArray.length}...`;
+                        }
+                    } catch (error) {
+                        console.error(`Erro ao processar ${file.name}:`, error);
+                    }
+                }
+
+                console.log(`✅ ${successCount} foto(s) adicionada(s) com sucesso`);
+                console.log(`📊 Total de fotos no item ${itemId}:`, appState.itemsPhotos[itemId].length);
+
+                // Save and update UI
+                saveState();
+                updatePhotoPreview(itemId);
+
+            } catch (error) {
+                console.error('❌ Erro geral ao processar fotos:', error);
+                alert('Erro ao processar fotos. Tente novamente.');
+            } finally {
+                // Clear input to allow selecting same files again
+                event.target.value = '';
             }
-
-            // Update UI after all files are processed
-            saveState();
-            updatePhotoPreview(itemId);
-
-            // Clear input to allow selecting same files again
-            event.target.value = '';
         }
 
         // Helper function to read file as Promise
@@ -1487,34 +1535,67 @@
         }
 
         function updatePhotoPreview(itemId) {
+            console.log(`🔄 Atualizando preview do item ${itemId}`);
+
             const photos = appState.itemsPhotos[itemId] || [];
             const preview = document.getElementById(`preview-${itemId}`);
+
+            if (!preview) {
+                console.error(`❌ Elemento preview-${itemId} não encontrado!`);
+                return;
+            }
+
+            console.log(`   Fotos a exibir: ${photos.length}`);
 
             // Clear previous content
             preview.innerHTML = '';
 
-            // Only create grid if there are photos
+            // Create photo elements if there are photos
             if (photos.length > 0) {
-                const photosHTML = photos.map((photo, idx) => `
-                    <div class="photo-preview">
-                        <img src="${photo}" alt="Foto ${idx+1}">
-                        <button class="photo-remove" onclick="removePhoto(${itemId}, ${idx})">×</button>
-                    </div>
-                `).join('');
+                photos.forEach((photo, idx) => {
+                    const photoDiv = document.createElement('div');
+                    photoDiv.className = 'photo-preview';
 
-                preview.innerHTML = photosHTML;
+                    const img = document.createElement('img');
+                    img.src = photo;
+                    img.alt = `Foto ${idx + 1}`;
+                    img.onerror = () => {
+                        console.error(`Erro ao carregar imagem ${idx + 1}`);
+                    };
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'photo-remove';
+                    removeBtn.textContent = '×';
+                    removeBtn.onclick = () => removePhoto(itemId, idx);
+
+                    photoDiv.appendChild(img);
+                    photoDiv.appendChild(removeBtn);
+                    preview.appendChild(photoDiv);
+                });
+
+                console.log(`✅ ${photos.length} foto(s) renderizada(s) no preview`);
+            } else {
+                console.log('ℹ️ Nenhuma foto para exibir');
             }
 
             // Update count
             const detail = preview.closest('.photo-section');
-            const existingCount = detail.querySelector('.photo-count');
-            if (existingCount) existingCount.remove();
+            if (detail) {
+                const existingCount = detail.querySelector('.photo-count');
+                if (existingCount) existingCount.remove();
 
-            if (photos.length > 0) {
-                const countDiv = document.createElement('div');
-                countDiv.className = 'photo-count';
-                countDiv.textContent = `✓ ${photos.length} foto(s) adicionada(s)`;
-                preview.after(countDiv);
+                if (photos.length > 0) {
+                    const countDiv = document.createElement('div');
+                    countDiv.className = 'photo-count';
+                    countDiv.textContent = `✓ ${photos.length} foto(s) adicionada(s)`;
+                    preview.after(countDiv);
+                }
+            }
+
+            // Update title count
+            const titleElement = detail?.querySelector('.detail-title');
+            if (titleElement) {
+                titleElement.textContent = `📸 Fotos (${photos.length})`;
             }
         }
 
@@ -1866,21 +1947,99 @@ As anotações estão no arquivo "anotacoes.txt" dentro de cada pasta (quando ho
 
         // STORAGE
         function saveState() {
-            localStorage.setItem('appState', JSON.stringify(appState));
+            try {
+                const stateString = JSON.stringify(appState);
+                localStorage.setItem('appState', stateString);
+                console.log('💾 Estado salvo no localStorage');
+
+                // Log storage usage
+                const sizeInBytes = new Blob([stateString]).size;
+                const sizeInMB = (sizeInBytes / (1024 * 1024)).toFixed(2);
+                console.log(`   Tamanho: ${sizeInMB} MB`);
+
+                // Check total photos
+                const totalPhotos = Object.values(appState.itemsPhotos).reduce((sum, photos) => sum + photos.length, 0);
+                console.log(`   Total de fotos salvas: ${totalPhotos}`);
+            } catch (error) {
+                console.error('❌ Erro ao salvar estado:', error);
+                if (error.name === 'QuotaExceededError') {
+                    alert('Armazenamento cheio! Exporte suas fotos e limpe alguns itens.');
+                }
+            }
         }
 
         function loadState() {
-            const saved = localStorage.getItem('appState');
-            if (saved) {
-                appState = JSON.parse(saved);
+            try {
+                const saved = localStorage.getItem('appState');
+                if (saved) {
+                    appState = JSON.parse(saved);
+                    console.log('📂 Estado carregado do localStorage');
+
+                    const totalPhotos = Object.values(appState.itemsPhotos).reduce((sum, photos) => sum + photos.length, 0);
+                    console.log(`   Total de fotos carregadas: ${totalPhotos}`);
+                }
+            } catch (error) {
+                console.error('❌ Erro ao carregar estado:', error);
             }
         }
+
+        // DIAGNOSTIC FUNCTIONS (para debug no console)
+        window.debugPhotos = function() {
+            console.log('🔍 DIAGNÓSTICO DE FOTOS');
+            console.log('='.repeat(50));
+
+            let totalPhotos = 0;
+            sections.forEach(section => {
+                console.log(`\n${section.title}`);
+                section.items.forEach(item => {
+                    const photos = appState.itemsPhotos[item.id] || [];
+                    if (photos.length > 0) {
+                        console.log(`  ✓ Item ${item.id}: ${photos.length} foto(s)`);
+                        totalPhotos += photos.length;
+                    }
+                });
+            });
+
+            console.log('\n' + '='.repeat(50));
+            console.log(`📊 TOTAL: ${totalPhotos} fotos`);
+            console.log(`💾 LocalStorage: ${(JSON.stringify(appState).length / 1024).toFixed(2)} KB`);
+            return appState.itemsPhotos;
+        };
+
+        window.fixAllPreviews = function() {
+            console.log('🔧 Forçando atualização de todos os previews...');
+            let fixed = 0;
+            sections.forEach(section => {
+                section.items.forEach(item => {
+                    if (appState.itemsPhotos[item.id] && appState.itemsPhotos[item.id].length > 0) {
+                        updatePhotoPreview(item.id);
+                        fixed++;
+                    }
+                });
+            });
+            console.log(`✅ ${fixed} previews atualizados`);
+        };
+
+        window.clearAllPhotos = function() {
+            if (confirm('⚠️ ATENÇÃO! Isso vai apagar TODAS as fotos. Tem certeza?')) {
+                appState.itemsPhotos = {};
+                saveState();
+                location.reload();
+            }
+        };
 
         // Check if JSZip is loaded
         window.addEventListener('load', () => {
             if (typeof JSZip === 'undefined') {
                 console.warn('JSZip não carregado. Funcionalidade de exportação ZIP pode não funcionar.');
             }
+
+            console.log('');
+            console.log('🛠️  FUNÇÕES DE DEBUG DISPONÍVEIS:');
+            console.log('   debugPhotos()      - Ver todas as fotos salvas');
+            console.log('   fixAllPreviews()   - Forçar atualização dos previews');
+            console.log('   clearAllPhotos()   - Limpar todas as fotos');
+            console.log('');
         });
 
         // INIT ON LOAD
