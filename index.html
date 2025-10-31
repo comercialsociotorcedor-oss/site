@@ -1393,45 +1393,89 @@
             document.getElementById(`file-${itemId}`).click();
         }
 
-        function handlePhoto(event, itemId) {
+        async function handlePhoto(event, itemId) {
             const files = event.target.files;
             if (!files.length) return;
-            
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    if (!appState.itemsPhotos[itemId]) {
-                        appState.itemsPhotos[itemId] = [];
+
+            // Show loading indicator
+            const preview = document.getElementById(`preview-${itemId}`);
+            const originalContent = preview.innerHTML;
+
+            if (!appState.itemsPhotos[itemId]) {
+                appState.itemsPhotos[itemId] = [];
+            }
+
+            const fileArray = Array.from(files);
+
+            // Show loading message
+            if (fileArray.length > 1) {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'photo-loading';
+                loadingDiv.style.cssText = 'text-align: center; padding: 20px; color: var(--text-secondary); font-size: 14px;';
+                loadingDiv.textContent = `Processando ${fileArray.length} foto(s)...`;
+                preview.appendChild(loadingDiv);
+            }
+
+            // Process all files sequentially
+            for (let i = 0; i < fileArray.length; i++) {
+                const file = fileArray[i];
+                try {
+                    const result = await readFileAsDataURL(file);
+                    appState.itemsPhotos[itemId].push(result);
+
+                    // Update loading message
+                    const loadingDiv = preview.querySelector('.photo-loading');
+                    if (loadingDiv && fileArray.length > 1) {
+                        loadingDiv.textContent = `Processando foto ${i + 1} de ${fileArray.length}...`;
                     }
-                    appState.itemsPhotos[itemId].push(e.target.result);
-                    saveState();
-                    updatePhotoPreview(itemId);
-                };
+                } catch (error) {
+                    console.error('Erro ao processar imagem:', error);
+                }
+            }
+
+            // Update UI after all files are processed
+            saveState();
+            updatePhotoPreview(itemId);
+
+            // Clear input to allow selecting same files again
+            event.target.value = '';
+        }
+
+        // Helper function to read file as Promise
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
                 reader.readAsDataURL(file);
             });
         }
 
-        function dropPhoto(event, itemId) {
+        async function dropPhoto(event, itemId) {
             event.preventDefault();
             event.currentTarget.classList.remove('dragover');
-            
+
             const files = event.dataTransfer.files;
             if (!files.length) return;
-            
-            Array.from(files).forEach(file => {
-                if (!file.type.startsWith('image/')) return;
-                
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    if (!appState.itemsPhotos[itemId]) {
-                        appState.itemsPhotos[itemId] = [];
-                    }
-                    appState.itemsPhotos[itemId].push(e.target.result);
-                    saveState();
-                    updatePhotoPreview(itemId);
-                };
-                reader.readAsDataURL(file);
-            });
+
+            if (!appState.itemsPhotos[itemId]) {
+                appState.itemsPhotos[itemId] = [];
+            }
+
+            // Filter only image files and process sequentially
+            const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+            for (const file of imageFiles) {
+                try {
+                    const result = await readFileAsDataURL(file);
+                    appState.itemsPhotos[itemId].push(result);
+                } catch (error) {
+                    console.error('Erro ao processar imagem:', error);
+                }
+            }
+
+            // Update UI only once after all files are processed
+            saveState();
+            updatePhotoPreview(itemId);
         }
 
         function removePhoto(itemId, photoIndex) {
@@ -1445,19 +1489,27 @@
         function updatePhotoPreview(itemId) {
             const photos = appState.itemsPhotos[itemId] || [];
             const preview = document.getElementById(`preview-${itemId}`);
-            
-            preview.innerHTML = photos.map((photo, idx) => `
-                <div class="photo-preview">
-                    <img src="${photo}" alt="Foto ${idx+1}">
-                    <button class="photo-remove" onclick="removePhoto(${itemId}, ${idx})">×</button>
-                </div>
-            `).join('');
-            
+
+            // Clear previous content
+            preview.innerHTML = '';
+
+            // Only create grid if there are photos
+            if (photos.length > 0) {
+                const photosHTML = photos.map((photo, idx) => `
+                    <div class="photo-preview">
+                        <img src="${photo}" alt="Foto ${idx+1}">
+                        <button class="photo-remove" onclick="removePhoto(${itemId}, ${idx})">×</button>
+                    </div>
+                `).join('');
+
+                preview.innerHTML = photosHTML;
+            }
+
             // Update count
             const detail = preview.closest('.photo-section');
             const existingCount = detail.querySelector('.photo-count');
             if (existingCount) existingCount.remove();
-            
+
             if (photos.length > 0) {
                 const countDiv = document.createElement('div');
                 countDiv.className = 'photo-count';
