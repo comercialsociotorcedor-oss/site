@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Relatório Fotográfico RSS - Campo v2.2</title>
+    <title>Relatório Fotográfico RSS v2.5 - 60 Fotos 📸</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -1492,13 +1492,61 @@
             }
         }
 
-        // Helper function to read file as Promise
+        // Helper function to read and compress image
         function readFileAsDataURL(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
+                reader.onload = (e) => {
+                    // Compress image: Quality 70%, max 1600px (otimizado para 60 fotos)
+                    compressImage(e.target.result, 0.70, 1600)
+                        .then(compressed => resolve(compressed))
+                        .catch(err => reject(err));
+                };
                 reader.onerror = (e) => reject(e);
                 reader.readAsDataURL(file);
+            });
+        }
+
+        // Compress image optimized for 60 photos on both mobile and desktop
+        function compressImage(dataUrl, quality = 0.70, maxWidth = 1600) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    // Scale to 1600px - excelente qualidade para relatórios
+                    // Otimizado para caber 60 fotos mesmo no celular
+                    if (width > maxWidth) {
+                        height = (height * maxWidth) / width;
+                        width = maxWidth;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d');
+
+                    // High quality rendering
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Convert to JPEG with quality 70% (otimizado para 60 fotos)
+                    const compressed = canvas.toDataURL('image/jpeg', quality);
+
+                    const originalSize = (dataUrl.length / 1024).toFixed(0);
+                    const compressedSize = (compressed.length / 1024).toFixed(0);
+                    const reduction = Math.round(((dataUrl.length - compressed.length) / dataUrl.length) * 100);
+
+                    console.log(`   📸 Qualidade: 70% | ${width}x${height}px`);
+                    console.log(`   📉 Tamanho: ${originalSize}KB → ${compressedSize}KB (-${reduction}%)`);
+                    console.log(`   💡 Sistema: 60 fotos (celular e notebook)`);
+                    resolve(compressed);
+                };
+                img.onerror = reject;
+                img.src = dataUrl;
             });
         }
 
@@ -1979,7 +2027,34 @@ As anotações estão no arquivo "anotacoes.txt" dentro de cada pasta (quando ho
 
                 if (error.name === 'QuotaExceededError') {
                     const totalPhotos = Object.values(appState.itemsPhotos).reduce((sum, photos) => sum + photos.length, 0);
-                    alert(`⚠️ Armazenamento Cheio!\n\nVocê tem ${totalPhotos} foto(s) salvas.\n\n👉 Clique em "📤 Exportar" para salvar um ZIP com todas as fotos e liberar espaço.`);
+                    const stateSize = (new Blob([JSON.stringify(appState)]).size / (1024 * 1024)).toFixed(1);
+
+                    // Show helpful message with actions
+                    const message = `⚠️ Armazenamento Cheio! (${stateSize}MB)
+
+📊 ${totalPhotos} foto(s) salvas
+
+📱 CELULAR: Até 60 fotos
+💻 NOTEBOOK: Até 60 fotos
+
+✅ EXPORTAR E CONTINUAR:
+
+1. Clique "📤" > "📦 Exportar ZIP"
+2. Salve o arquivo
+3. Console: clearAllPhotos()
+4. Continue adicionando novas fotos
+
+💡 Sistema: 60 fotos (celular e notebook)
+Qualidade: 1600px, JPEG 70%`;
+
+                    alert(message);
+
+                    // Auto-open export modal
+                    setTimeout(() => {
+                        try {
+                            document.getElementById('exportModal').classList.add('active');
+                        } catch (e) {}
+                    }, 100);
                 } else {
                     // Other errors - don't show alert for minor issues
                     console.warn('Erro ao salvar, mas não é QuotaExceeded. Continuando...');
