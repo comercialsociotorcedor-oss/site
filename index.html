@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Relatório Fotográfico RSS - Campo</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Relatório Fotográfico RSS - Campo v2.2</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -1949,22 +1952,40 @@ As anotações estão no arquivo "anotacoes.txt" dentro de cada pasta (quando ho
         function saveState() {
             try {
                 const stateString = JSON.stringify(appState);
-                localStorage.setItem('appState', stateString);
-                console.log('💾 Estado salvo no localStorage');
 
-                // Log storage usage
+                // Check size before saving
                 const sizeInBytes = new Blob([stateString]).size;
                 const sizeInMB = (sizeInBytes / (1024 * 1024)).toFixed(2);
-                console.log(`   Tamanho: ${sizeInMB} MB`);
-
-                // Check total photos
                 const totalPhotos = Object.values(appState.itemsPhotos).reduce((sum, photos) => sum + photos.length, 0);
-                console.log(`   Total de fotos salvas: ${totalPhotos}`);
+
+                // Try to save
+                localStorage.setItem('appState', stateString);
+
+                // Log success
+                console.log('💾 Estado salvo no localStorage');
+                console.log(`   Tamanho: ${sizeInMB} MB`);
+                console.log(`   Total de fotos: ${totalPhotos}`);
+
+                // Warn if getting close to limit (>8MB)
+                if (sizeInBytes > 8 * 1024 * 1024) {
+                    console.warn('⚠️ Armazenamento próximo do limite! Considere exportar o relatório.');
+                }
+
+                return true;
             } catch (error) {
                 console.error('❌ Erro ao salvar estado:', error);
+                console.error('   Nome do erro:', error.name);
+                console.error('   Mensagem:', error.message);
+
                 if (error.name === 'QuotaExceededError') {
-                    alert('Armazenamento cheio! Exporte suas fotos e limpe alguns itens.');
+                    const totalPhotos = Object.values(appState.itemsPhotos).reduce((sum, photos) => sum + photos.length, 0);
+                    alert(`⚠️ Armazenamento Cheio!\n\nVocê tem ${totalPhotos} foto(s) salvas.\n\n👉 Clique em "📤 Exportar" para salvar um ZIP com todas as fotos e liberar espaço.`);
+                } else {
+                    // Other errors - don't show alert for minor issues
+                    console.warn('Erro ao salvar, mas não é QuotaExceeded. Continuando...');
                 }
+
+                return false;
             }
         }
 
@@ -2024,8 +2045,48 @@ As anotações estão no arquivo "anotacoes.txt" dentro de cada pasta (quando ho
             if (confirm('⚠️ ATENÇÃO! Isso vai apagar TODAS as fotos. Tem certeza?')) {
                 appState.itemsPhotos = {};
                 saveState();
+                console.log('🗑️ Todas as fotos foram removidas');
                 location.reload();
             }
+        };
+
+        window.clearStorage = function() {
+            if (confirm('⚠️ ATENÇÃO! Isso vai resetar TODO o aplicativo (fotos, notas, progresso). Tem certeza?')) {
+                localStorage.clear();
+                console.log('🗑️ LocalStorage completamente limpo');
+                location.reload();
+            }
+        };
+
+        window.getStorageSize = function() {
+            const stateString = JSON.stringify(appState);
+            const sizeInBytes = new Blob([stateString]).size;
+            const sizeInMB = (sizeInBytes / (1024 * 1024)).toFixed(2);
+            const sizeInKB = (sizeInBytes / 1024).toFixed(2);
+            const totalPhotos = Object.values(appState.itemsPhotos).reduce((sum, photos) => sum + photos.length, 0);
+
+            console.log('📊 INFORMAÇÕES DE ARMAZENAMENTO');
+            console.log('='.repeat(50));
+            console.log(`Tamanho total: ${sizeInMB} MB (${sizeInKB} KB)`);
+            console.log(`Total de fotos: ${totalPhotos}`);
+            console.log(`Itens marcados: ${Object.keys(appState.itemsChecked).length}`);
+            console.log(`Notas: ${Object.keys(appState.itemsNotes).length}`);
+
+            // Estimate available space
+            const estimatedLimit = 10 * 1024 * 1024; // 10MB
+            const percentUsed = ((sizeInBytes / estimatedLimit) * 100).toFixed(1);
+            console.log(`\nUso estimado: ${percentUsed}%`);
+
+            if (sizeInBytes > 8 * 1024 * 1024) {
+                console.warn('⚠️ ATENÇÃO: Armazenamento próximo do limite!');
+                console.log('💡 Recomendação: Exportar ZIP e limpar fotos antigas');
+            } else if (sizeInBytes > 5 * 1024 * 1024) {
+                console.warn('⚠️ Armazenamento em nível moderado');
+            } else {
+                console.log('✅ Armazenamento em nível normal');
+            }
+
+            return { sizeInMB, sizeInKB, totalPhotos, percentUsed };
         };
 
         // Check if JSZip is loaded
@@ -2036,9 +2097,11 @@ As anotações estão no arquivo "anotacoes.txt" dentro de cada pasta (quando ho
 
             console.log('');
             console.log('🛠️  FUNÇÕES DE DEBUG DISPONÍVEIS:');
-            console.log('   debugPhotos()      - Ver todas as fotos salvas');
-            console.log('   fixAllPreviews()   - Forçar atualização dos previews');
-            console.log('   clearAllPhotos()   - Limpar todas as fotos');
+            console.log('   debugPhotos()        - Ver todas as fotos salvas');
+            console.log('   fixAllPreviews()     - Forçar atualização dos previews');
+            console.log('   getStorageSize()     - Ver tamanho do armazenamento');
+            console.log('   clearAllPhotos()     - Limpar apenas as fotos');
+            console.log('   clearStorage()       - Limpar TUDO (reset completo)');
             console.log('');
         });
 
